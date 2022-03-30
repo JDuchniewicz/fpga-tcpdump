@@ -1,5 +1,4 @@
 
-
 module pkt_ctrl(input logic new_request,
                 input logic clk,
                 input logic reset,
@@ -64,7 +63,7 @@ module pkt_ctrl(input logic new_request,
                     next_state = RDY;
                     end
 
-            PROC:   begin
+             RDY:   begin
                     next_state = IDLE;
                     end
         endcase
