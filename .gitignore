@@ -1,2 +1,17 @@
 # Nothing here yet :)
 */work*
+*/transcript*
+
+# Quartus related files
+incremental_db/*
+**/db/*
+output_files/*
+simulation/*
+!simulation/modelsim/*_tb.v
+!simulation/modelsim/*_tb.do
+*.qpf
+*.qsf
+*.txt
+*.bak
+*.rpt
+/greybox_tmp/**

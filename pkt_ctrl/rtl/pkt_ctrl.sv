@@ -6,9 +6,9 @@ module pkt_ctrl(input logic new_request,
                 output logic wr_ctrl,
                 output logic register_sth); // TODO: change
 
-    enum logic  { IDLE, READ, PROC, RDY } state, next_state;
+    enum logic [1:0] { IDLE, READ, PROC, RDY } state, next_state;
 
-    states: always_ff @(posedge clk, negedge reset) begin
+    always_ff @(posedge clk, negedge reset) begin : states
         if (reset) begin
             state <= IDLE;
         end
@@ -17,7 +17,7 @@ module pkt_ctrl(input logic new_request,
         end
     end
 
-    control: always_comb begin
+    always_comb begin : control
         case (state)
             IDLE:   begin
                     rd_ctrl = 1'b0;
@@ -45,11 +45,12 @@ module pkt_ctrl(input logic new_request,
         endcase
     end
 
-    fsm: always_ff @(posedge state) begin
+    always_ff @(posedge state) begin : fsm
         case (state)
             IDLE:   begin
                     if (new_request) begin // TODO: is this proper?
                         next_state = READ;
+                    end
                     else begin
                         next_state = IDLE;
                     end
