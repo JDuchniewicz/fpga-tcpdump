@@ -1,6 +1,6 @@
-# Nothing here yet :)
 */work*
 */transcript*
+*.hdl_checker/**
 
 # Quartus related files
 incremental_db/*

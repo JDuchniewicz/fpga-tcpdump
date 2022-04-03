@@ -6,7 +6,7 @@ module pkt_ctrl(input logic new_request,
                 input logic wr_ctrl_rdy,
                 output logic rd_ctrl,
                 output logic wr_ctrl,
-                output logic register_sth); // TODO: change
+                output logic [1:0] state); // TODO: change
 
     enum logic [1:0] { IDLE, RUN, DONE } state, next_state;
 
