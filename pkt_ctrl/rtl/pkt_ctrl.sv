@@ -2,11 +2,13 @@
 module pkt_ctrl(input logic new_request,
                 input logic clk,
                 input logic reset,
+                input logic rd_ctrl_rdy,
+                input logic wr_ctrl_rdy,
                 output logic rd_ctrl,
                 output logic wr_ctrl,
                 output logic register_sth); // TODO: change
 
-    enum logic [1:0] { IDLE, READ, PROC, RDY } state, next_state;
+    enum logic [1:0] { IDLE, RUN, DONE } state, next_state;
 
     always_ff @(posedge clk, negedge reset) begin : states
         if (reset) begin
@@ -25,19 +27,13 @@ module pkt_ctrl(input logic new_request,
                     register_sth = 1'b0;
                     end
 
-            READ:   begin
+            RUN:    begin
                     rd_ctrl = 1'b1;
                     wr_ctrl = 1'b0;
                     register_sth = 1'b0;
                     end
 
-            PROC:   begin
-                    rd_ctrl = 1'b0;
-                    wr_ctrl = 1'b0;
-                    register_sth = 1'b0;
-                    end
-
-             RDY:   begin
+           DONE:    begin
                     rd_ctrl = 1'b0;
                     wr_ctrl = 1'b1;
                     register_sth = 1'b1;
@@ -49,23 +45,29 @@ module pkt_ctrl(input logic new_request,
         case (state)
             IDLE:   begin
                     if (new_request) begin // TODO: is this proper?
-                        next_state = READ;
+                        next_state = RUN;
                     end
                     else begin
                         next_state = IDLE;
                     end
                     end
 
-            READ:   begin
-                    next_state = PROC;
+            RUN:    begin
+                    if (rd_ctrl_rdy) begin
+                        next_state = DONE;
+                    end
+                    else begin
+                        next_state = RUN;
+                    end
                     end
 
-            PROC:   begin
-                    next_state = RDY;
+            DONE:   begin
+                    if (wr_ctrl_rdy) begin
+                        next_state = IDLE;
                     end
-
-             RDY:   begin
-                    next_state = IDLE;
+                    else begin
+                        next_state = DONE;
+                    end
                     end
         endcase
     end
