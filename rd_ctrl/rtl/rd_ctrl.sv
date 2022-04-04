@@ -42,7 +42,7 @@ module rd_ctrl(input logic clk,
 
             RUN:    begin
                         if (!almost_full) begin
-                            if ((pkt_addr + addr_offset) <= pkt_addr) begin
+                            if ((pkt_addr + addr_offset) <= pkt_addr) begin // TODO: this should probably operate on real data so we can put it in the queue however it would be quite much??? MTU 1500 bytes, it probably does not matter as we are sending either 4 byte data or 4 byte addresses to data
                                 fifo_in = pkt_addr + addr_offset;
                                 addr_offset += 32'b4;
                             end
@@ -70,7 +70,6 @@ module rd_ctrl(input logic clk,
                     end
 
             RUN:    begin
-                // TODO: transfer to DONE upon last word
                     if (done_sending) begin
                         next_state = DONE;
                     end

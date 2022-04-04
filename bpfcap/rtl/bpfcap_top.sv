@@ -45,7 +45,10 @@ module bpfcap_top(input logic clk,
                           .rd_ctrl,
                           .rd_ctrl_rdy,
                           .almost_full,
-                          .fifo_in);
+                          .fifo_in,
+                          .control(out_control),
+                          .pkt_addr(out_pkt_addr),
+                          .pkt_len(out_pkt_len));
 
     // this reads from FIFO and transfers the data to be written in SDRAM/HPS
     wr_ctrl write_control(.clk,
@@ -53,7 +56,10 @@ module bpfcap_top(input logic clk,
                           .wr_ctrl,
                           .wr_ctrl_rdy,
                           .almost_empty,
-                          .fifo_out);
+                          .fifo_out,
+                          .control(out_control),
+                          .pkt_addr(out_pkt_addr),
+                          .pkt_len(out_pkt_len));
 
     fifo fifo_i (.clock(clk),
                  .data(fifo_in),
