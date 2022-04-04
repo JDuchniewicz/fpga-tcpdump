@@ -6,12 +6,12 @@ module pkt_ctrl(input logic new_request,
                 input logic wr_ctrl_rdy,
                 output logic rd_ctrl,
                 output logic wr_ctrl,
-                output logic [1:0] state); // TODO: change
+                output logic [1:0] state_out); // TODO: change
 
     enum logic [1:0] { IDLE, RUN, DONE } state, next_state;
 
-    always_ff @(posedge clk, negedge reset) begin : states
-        if (reset) begin
+    always_ff @(posedge clk) begin : states
+        if (!reset) begin
             state <= IDLE;
         end
         else begin
@@ -24,19 +24,19 @@ module pkt_ctrl(input logic new_request,
             IDLE:   begin
                     rd_ctrl = 1'b0;
                     wr_ctrl = 1'b0;
-                    register_sth = 1'b0;
+                    state_out = IDLE;
                     end
 
             RUN:    begin
                     rd_ctrl = 1'b1;
-                    wr_ctrl = 1'b0;
-                    register_sth = 1'b0;
+                    wr_ctrl = 1'b1;
+                    state_out = RUN;
                     end
 
            DONE:    begin
                     rd_ctrl = 1'b0;
-                    wr_ctrl = 1'b1;
-                    register_sth = 1'b1;
+                    wr_ctrl = 1'b0;
+                    state_out = DONE;
                     end
         endcase
     end
@@ -53,7 +53,7 @@ module pkt_ctrl(input logic new_request,
                     end
 
             RUN:    begin
-                    if (rd_ctrl_rdy) begin
+                    if (rd_ctrl_rdy && wr_ctrl_rdy) begin
                         next_state = DONE;
                     end
                     else begin
@@ -62,12 +62,7 @@ module pkt_ctrl(input logic new_request,
                     end
 
             DONE:   begin
-                    if (wr_ctrl_rdy) begin
                         next_state = IDLE;
-                    end
-                    else begin
-                        next_state = DONE;
-                    end
                     end
         endcase
     end
