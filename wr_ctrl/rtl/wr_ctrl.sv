@@ -1,12 +1,10 @@
-
-module pkt_ctrl(input logic new_request,
-                input logic clk,
-                input logic reset,
-                input logic rd_ctrl_rdy,
-                input logic wr_ctrl_rdy,
-                output logic rd_ctrl,
-                output logic wr_ctrl,
-                output logic [1:0] state_out); // TODO: change
+module wr_ctrl(input logic clk,
+               input logic reset,
+               input logic wr_ctrl,
+               input logic almost_empty,
+               input logic [31:0] fifo_out,
+               output logic wr_ctrl_rdy
+           );
 
     enum logic [1:0] { IDLE, RUN, DONE } state, next_state;
 
@@ -22,21 +20,13 @@ module pkt_ctrl(input logic new_request,
     always_comb begin : control
         case (state)
             IDLE:   begin
-                    rd_ctrl = 1'b0;
-                    wr_ctrl = 1'b0;
-                    state_out = IDLE;
                     end
 
             RUN:    begin
-                    rd_ctrl = 1'b1;
-                    wr_ctrl = 1'b1;
-                    state_out = RUN;
                     end
 
            DONE:    begin
-                    rd_ctrl = 1'b0;
-                    wr_ctrl = 1'b0;
-                    state_out = DONE;
+                    wr_ctrl_rdy = 1'b1;
                     end
         endcase
     end
@@ -44,7 +34,7 @@ module pkt_ctrl(input logic new_request,
     always_ff @(posedge state) begin : fsm
         case (state)
             IDLE:   begin
-                    if (new_request) begin // TODO: is this proper? (will it react)?
+                    if (wr_ctrl) begin
                         next_state = RUN;
                     end
                     else begin
@@ -53,7 +43,7 @@ module pkt_ctrl(input logic new_request,
                     end
 
             RUN:    begin
-                    if (rd_ctrl_rdy && wr_ctrl_rdy) begin
+                    if (done_sending) begin // finish writing when no data in queue?
                         next_state = DONE;
                     end
                     else begin
@@ -67,5 +57,4 @@ module pkt_ctrl(input logic new_request,
         endcase
     end
 
-endmodule : pkt_ctrl
-
+endmodule

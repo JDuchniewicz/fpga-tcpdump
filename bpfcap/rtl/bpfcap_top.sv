@@ -12,6 +12,7 @@ module bpfcap_top(input logic clk,
 
     logic rd_ctrl_rdy, wr_ctrl_rdy, rd_ctrl, wr_ctrl;
     logic [1:0] state;
+    logic [31:0] out_control, out_pkt_addr, out_pkt_len;
 
     logic [8:0] usedw; // unused
     logic almost_empty, almost_full;
@@ -24,7 +25,10 @@ module bpfcap_top(input logic clk,
                             .write(avs_s0_write),
                             .in(avs_s0_writedata),
                             .state
-                            .out(avs_s0_readdata));
+                            .out(avs_s0_readdata),
+                            .out_control,
+                            .out_pkt_addr,
+                            .out_pkt_len);
 
     pkt_ctrl packet_control (.new_request(avs_s0_write),
                              .clk,

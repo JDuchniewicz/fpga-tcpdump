@@ -13,9 +13,16 @@ module register
                 input logic write,
                 input logic [N-1:0] in,
                 input logic [1:0] state,
-                output logic [N-1:0] out); // TODO: how to read necessary configuration parts for other control modules?
+                output logic [N-1:0] out,
+                output logic [N-1:0] out_control,
+                output logic [N-1:0] out_pkt_addr,
+                output logic [N-1:0] out_pkt_len);
 
     logic [N-1:0] control, pkt_addr, pkt_len; // TODO: is this all? maybe more registers? pkt_len or end_add?
+
+    assign out_control = control;
+    assign out_pkt_addr = pkt_addr;
+    assign out_pkt_len = pkt_len;
 
     always_ff @(posedge clk) begin
         if (!reset) begin
