@@ -4,7 +4,7 @@
                 //input logic [31:0] control, // TODO: decide upon more registers
                 //input logic [31:0] start_addr,
                 //input logic [31:0] pkt_len,
-module register
+module register_bank
               #(parameter N = 32)
                (input logic clk,
                 input logic reset,

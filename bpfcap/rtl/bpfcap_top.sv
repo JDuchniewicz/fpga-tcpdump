@@ -18,17 +18,17 @@ module bpfcap_top(input logic clk,
     logic almost_empty, almost_full;
     logic [31:0] fifo_in, fifo_out;
 
-    register #(.N(32)) regs(.clk,
-                            .reset,
-                            .address(avs_s0_address),
-                            .read(avs_s0_read),
-                            .write(avs_s0_write),
-                            .in(avs_s0_writedata),
-                            .state
-                            .out(avs_s0_readdata),
-                            .out_control,
-                            .out_pkt_addr,
-                            .out_pkt_len);
+    register_bank #(.N(32)) regs(.clk,
+                                 .reset,
+                                 .address(avs_s0_address),
+                                 .read(avs_s0_read),
+                                 .write(avs_s0_write),
+                                 .in(avs_s0_writedata),
+                                 .state
+                                 .out(avs_s0_readdata),
+                                 .out_control,
+                                 .out_pkt_addr,
+                                 .out_pkt_len);
 
     pkt_ctrl packet_control (.new_request(avs_s0_write),
                              .clk,
