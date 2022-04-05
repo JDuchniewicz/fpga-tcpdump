@@ -8,7 +8,7 @@ module rd_ctrl(input logic clk,
                input logic [31:0] pkt_len,
                output logic [31:0] fifo_in, // here we also need the actual data obtained from mem addr H2F in ctrl regfrom s
                output logic rd_ctrl_rdy
-           );
+           ); // TODO: add Avalon MM for reading the data from memory addresses
 
     enum logic [1:0] { IDLE, RUN, DONE } state, state_next;
 
@@ -31,7 +31,7 @@ module rd_ctrl(input logic clk,
         end
     end
 
-    always_comb begin : control
+    always_comb begin : ctrl
         case (state)
             IDLE:   begin
                         control_next = control;
@@ -46,7 +46,7 @@ module rd_ctrl(input logic clk,
                         if (!almost_full) begin
                             if ((pkt_addr + addr_offset) <= pkt_addr) begin // TODO: this should probably operate on real data so we can put it in the queue however it would be quite much??? MTU 1500 bytes, it probably does not matter as we are sending either 4 byte data or 4 byte addresses to data
                                 fifo_in = pkt_addr + addr_offset;
-                                addr_offset_next += 32'b4;
+                                addr_offset_next += 32'h4;
                             end
                             else begin
                                 done_sending_next = 1'b1;

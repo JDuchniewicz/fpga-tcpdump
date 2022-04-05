@@ -11,9 +11,9 @@ module register_bank
                 input logic [2:0] address,
                 input logic read,
                 input logic write,
-                input logic [N-1:0] in,
+                input logic [N-1:0] readdata,
                 input logic [1:0] state,
-                output logic [N-1:0] out,
+                output logic [N-1:0] writedata
                 output logic [N-1:0] out_control,
                 output logic [N-1:0] out_pkt_addr,
                 output logic [N-1:0] out_pkt_len);
@@ -38,20 +38,20 @@ module register_bank
 
             if (write) begin
                 case (address) begin
-                    3'b000 : control <= in;
-                    3'b001 : pkt_addr <= in;
-                    3'b010 : pkt_len <= in;
+                    3'b000 : control <= readdata,
+                    3'b001 : pkt_addr <= readdata,
+                    3'b010 : pkt_len <= readdata,
                 endcase
             end
 
             if (read) begin
                 case (address) begin
-                    3'b000 : out <= control;
-                    3'b001 : out <= pkt_addr;
-                    3'b010 : out <= pkt_len;
+                    3'b000 : writedata <= control;
+                    3'b001 : writedata <= pkt_addr;
+                    3'b010 : writedata <= pkt_len;
                 endcase
             end
         end
     end
-endmodule
+endmodule : register_bank
 

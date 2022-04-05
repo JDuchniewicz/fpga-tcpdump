@@ -23,9 +23,9 @@ module bpfcap_top(input logic clk,
                                  .address(avs_s0_address),
                                  .read(avs_s0_read),
                                  .write(avs_s0_write),
-                                 .in(avs_s0_writedata),
+                                 .readdata(avs_s0_readdata),
                                  .state
-                                 .out(avs_s0_readdata),
+                                 .writedata(avs_s0_writedata),
                                  .out_control,
                                  .out_pkt_addr,
                                  .out_pkt_len);
@@ -71,5 +71,5 @@ module bpfcap_top(input logic clk,
                  .q(fifo_out),
                  .usedw);
 
-endmodule
+endmodule : bpfcap_top
 

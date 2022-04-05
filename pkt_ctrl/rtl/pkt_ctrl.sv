@@ -8,14 +8,14 @@ module pkt_ctrl(input logic new_request,
                 output logic wr_ctrl,
                 output logic [1:0] state_out); // TODO: change
 
-    enum logic [1:0] { IDLE, RUN, DONE } state, next_state;
+    enum logic [1:0] { IDLE, RUN, DONE } state, state_next;
 
     always_ff @(posedge clk) begin : states
         if (!reset) begin
             state <= IDLE;
         end
         else begin
-            state <= next_state;
+            state <= state_next;
         end
     end
 
@@ -45,24 +45,24 @@ module pkt_ctrl(input logic new_request,
         case (state)
             IDLE:   begin
                     if (new_request) begin // TODO: is this proper? (will it react)?
-                        next_state = RUN;
+                        state_next = RUN;
                     end
                     else begin
-                        next_state = IDLE;
+                        state_next = IDLE;
                     end
                     end
 
             RUN:    begin
                     if (rd_ctrl_rdy && wr_ctrl_rdy) begin
-                        next_state = DONE;
+                        state_next = DONE;
                     end
                     else begin
-                        next_state = RUN;
+                        state_next = RUN;
                     end
                     end
 
             DONE:   begin
-                        next_state = IDLE;
+                        state_next = IDLE;
                     end
         endcase
     end
