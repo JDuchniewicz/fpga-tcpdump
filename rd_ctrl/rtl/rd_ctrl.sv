@@ -4,16 +4,21 @@ module rd_ctrl(input logic clk,
                input logic rd_ctrl,
                input logic almost_full,
                input logic [31:0] control,
-               input logic [31:0] pkt_addr,
-               input logic [31:0] pkt_len,
+               input logic [31:0] pkt_begin,
+               input logic [31:0] pkt_end,
                output logic [31:0] fifo_in, // here we also need the actual data obtained from mem addr H2F in ctrl regfrom s
-               output logic rd_ctrl_rdy
+               output logic rd_ctrl_rdy,
+               // avalon (host)master signals
+               output logic [31:0] address,
+               input logic [31:0] readdata,
+               output logic read
+                // TODO: add bursts
            ); // TODO: add Avalon MM for reading the data from memory addresses
 
     enum logic [1:0] { IDLE, RUN, DONE } state, state_next;
 
-    logic [31:0] reg_control, reg_pkt_addr, reg_pkt_len,
-                 control_next, pkt_addr_next, pkt_len_next;
+    logic [31:0] reg_control, reg_pkt_begin, reg_pkt_end,
+                 control_next, pkt_begin_next, pkt_end_next;
     logic [31:0] addr_offset, addr_offset_next;
     logic done_sending, done_sending_next;
 
@@ -24,8 +29,8 @@ module rd_ctrl(input logic clk,
         else begin
             state <= state_next;
             reg_control <= control_next;
-            reg_pkt_addr <= pkt_addr_next;
-            reg_pkt_len <= pkt_len_next;
+            reg_pkt_begin <= pkt_begin_next;
+            reg_pkt_end <= pkt_end_next;
             addr_offset <= addr_offset_next;
             done_sending <= done_sending_next;
         end
@@ -35,18 +40,16 @@ module rd_ctrl(input logic clk,
         case (state)
             IDLE:   begin
                         control_next = control;
-                        pkt_addr_next = pkt_addr;
-                        pkt_len_next = pkt_len;
+                        pkt_begin_next = pkt_begin;
+                        pkt_end_next = pkt_end;
                         addr_offset_next = '0;
                         done_sending_next = '0;
                     end
 
             RUN:    begin
-                        // TODO: change, we need to load data from Avalon MM if here
                         if (!almost_full) begin
-                            if ((pkt_addr + addr_offset) <= pkt_addr) begin // TODO: this should probably operate on real data so we can put it in the queue however it would be quite much??? MTU 1500 bytes, it probably does not matter as we are sending either 4 byte data or 4 byte addresses to data
-                                fifo_in = pkt_addr + addr_offset;
-                                addr_offset_next += 32'h4;
+                            if ((pkt_begin + addr_offset) <= pkt_end) begin // TODO: decide if we want packet end or ending address of the packet (probably the latter)
+                                addr_offset_next += 'h4;
                             end
                             else begin
                                 done_sending_next = 1'b1;
@@ -86,4 +89,16 @@ module rd_ctrl(input logic clk,
         endcase
     end
 
+    always_ff @(posedge clk) begin : avalon_mm
+        if (state === RUN && !almost_full) begin // this reads cycle by cycle TODO: add burst support
+            address <= pkt_begin + addr_offset;
+            read <= 1'b1;
+            fifo_in <= readdata;
+        end
+        else begin
+            address <= address;
+            read <= 1'b0;
+            fifo_in <= fifo_in;
+        end
+    end
 endmodule
