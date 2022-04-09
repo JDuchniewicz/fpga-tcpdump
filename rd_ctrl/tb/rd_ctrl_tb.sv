@@ -35,22 +35,34 @@ module tb_top;
         pkt_begin <= '0;
         pkt_end <= 'd32; // 8 words
 
-
-        #20
         reset <= 1'b0;
+        #20
+        reset <= 1'b1;
 
         // start the proper testbench, load data
         // add always block that models the slave mm
         // wait for read and return some data
 
+        // Initialize the component: 1 cycle delay between sending and
+        // writing to FIFO
         $display("[RD_CTRL] T= %t Starting simulation...\n", $time);
         rd_ctrl <= 1'b1;
 
         for(int i = 0; i < pkt_end / 4; ++i) begin
             dummy_data <= i + 'd10;
-            #10
+            #20
             $display("[RD_CTRL] T= %t sent: %d, received: %d", $time, dummy_data, readdata);
         end
+        #20
+        $display("[RD_CTRL] T= %t sent: %d, received: %d", $time, dummy_data, readdata);
+
+        #20
+        rd_ctrl <= 1'b0;
+
+        #20
+        $display("[RD_CTRL] T= %t after rd_ctrl=0 received: %d", $time, readdata);
+        $display("[RD_CTRL] T= %t Ending simulation...\n", $time);
+        $exit;
     end
 
     always @(negedge clk) begin

@@ -63,7 +63,7 @@ module rd_ctrl(input logic clk,
         endcase
     end
 
-    always_ff @(posedge state) begin : fsm
+    always_comb begin : fsm
         case (state)
             IDLE:   begin
                     if (rd_ctrl) begin
