@@ -5,56 +5,55 @@ module wr_ctrl(input logic clk,
                input logic [31:0] fifo_out,
                output logic wr_ctrl_rdy,
                input logic [31:0] control,
-               input logic [31:0] pkt_addr,
-               input logic [31:0] pkt_len
+               input logic [31:0] pkt_begin,
+               input logic [31:0] pkt_end,
+               // avalon (host)master signals
+               output logic [31:0] address,
+               output logic [31:0] writedata,
+               output logic write
+                // TODO: add bursts
            );
 
-    enum logic [1:0] { IDLE, RUN, DONE } state, next_state;
+    enum logic [1:0] { IDLE, RUN, DONE } state, state_next;
 
-    logic [31:0] reg_control, reg_pkt_addr, reg_pkt_len;
-    logic [31:0] addr_offset;
-    logic done_reading;
-
-    always_ff @(posedge clk) begin : states
-        if (!reset) begin
-            state <= IDLE;
-            reg_control <= '0;
-            reg_pkt_addr <= '0;
-            reg_pkt_len <= '0;
-            addr_offset <= '0;
-            done_reading <= '0;
-        end
+    logic [31:0] reg_control, reg_pkt_begin, reg_pkt_end,
+                 control_next, pkt_begin_next, pkt_end_next;
+    logic [31:0] addr_offset, addr_offset_next;
+    logic done_reading, done_reading_next;
 
     always_ff @(posedge clk) begin : states
         if (!reset) begin
             state <= IDLE;
         end
         else begin
-            state <= next_state;
+            state <= state_next;
+            reg_control <= control_next;
+            reg_pkt_begin <= pkt_begin_next;
+            reg_pkt_end <= pkt_end_next;
+            addr_offset <= addr_offset_next;
+            done_reading <= done_reading_next;
         end
     end
 
-    always_comb begin : control
+    always_comb begin : ctrl
         case (state)
             IDLE:   begin
-                        reg_control = control;
-                        reg_pkt_addr = pkt_addr;
-                        reg_pkt_len = pkt_len;
-                        addr_offset = '0;
-                        done_reading = '0;
+                        control_next = control;
+                        pkt_begin_next = pkt_begin;
+                        pkt_end_next = pkt_end;
+                        addr_offset_next = '0;
+                        done_reading_next = '0;
                     end
 
             RUN:    begin
-                    if (!almost_empty) begin // TODO: what when we exhaust the FIFO too early?
-                        if (pkt_addr + addr_offset <= pkt_len) begin
-                            // TODO: write current data to memory address
-                            // configured in the regs
-                            addr_offset += 32'b4;
+                        if (!almost_empty) begin
+                            if ((pkt_begin + addr_offset) <= pkt_end) begin // TODO: decide if we want packet end or ending address of the packet (probably the latter)
+                                addr_offset_next += 'h4;
+                            end
+                            else begin
+                                done_reading_next = 1'b1;
+                            end
                         end
-                        else begin
-                            done_reading = 1'b1;
-                        end
-                    end
                     end
 
            DONE:    begin
@@ -63,30 +62,42 @@ module wr_ctrl(input logic clk,
         endcase
     end
 
-    always_ff @(posedge state) begin : fsm
+    always_comb begin : fsm
         case (state)
             IDLE:   begin
                     if (wr_ctrl) begin
-                        next_state = RUN;
+                        state_next = RUN;
                     end
                     else begin
-                        next_state = IDLE;
+                        state_next = IDLE;
                     end
                     end
 
             RUN:    begin
                     if (done_reading) begin
-                        next_state = DONE;
+                        state_next = DONE;
                     end
                     else begin
-                        next_state = RUN;
+                        state_next = RUN;
                     end
                     end
 
             DONE:   begin
-                        next_state = IDLE;
+                        state_next = IDLE;
                     end
         endcase
     end
 
+    always_ff @(posedge clk) begin : avalon_mm
+        if (state === RUN && !almost_empty) begin // this reads cycle by cycle TODO: add burst support
+            address <= pkt_begin + addr_offset;
+            write <= 1'b1;
+            writedata <= fifo_out;
+        end
+        else begin
+            address <= address;
+            write <= 1'b0;
+            writedata <= writedata;
+        end
+    end
 endmodule

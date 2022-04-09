@@ -45,8 +45,6 @@ module tb_top;
 
         // Initialize the component: 1 cycle delay between sending and
         // writing to FIFO
-        $display("[RD_CTRL] T= %t Starting simulation...\n", $time);
-        rd_ctrl <= 1'b1;
 
         for(int i = 0; i < pkt_end / 4; ++i) begin
             dummy_data <= i + 'd10;

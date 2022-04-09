@@ -13,7 +13,7 @@ module rd_ctrl(input logic clk,
                input logic [31:0] readdata,
                output logic read
                 // TODO: add bursts
-           ); // TODO: add Avalon MM for reading the data from memory addresses
+           );
 
     enum logic [1:0] { IDLE, RUN, DONE } state, state_next;
 
