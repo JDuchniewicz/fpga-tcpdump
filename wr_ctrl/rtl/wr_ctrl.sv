@@ -10,8 +10,9 @@ module wr_ctrl(input logic clk,
                // avalon (host)master signals
                output logic [31:0] address,
                output logic [31:0] writedata,
-               output logic write
-                // TODO: add bursts
+               output logic write,
+               // TODO: add bursts
+               output logic [15:0] burstcount
            );
 
     enum logic [1:0] { IDLE, RUN, DONE } state, state_next;
@@ -20,6 +21,10 @@ module wr_ctrl(input logic clk,
                  control_next, pkt_begin_next, pkt_end_next;
     logic [31:0] addr_offset, addr_offset_next;
     logic done_reading, done_reading_next;
+
+    logic [15:0] packet_byte_count, burst_index, burst_index_next; // TODO: size?
+
+    assign burstcount = (reg_pkt_end - reg_pkt_begin) / 4;
 
     always_ff @(posedge clk) begin : states
         if (!reset) begin
@@ -32,6 +37,7 @@ module wr_ctrl(input logic clk,
             reg_pkt_end <= pkt_end_next;
             addr_offset <= addr_offset_next;
             done_reading <= done_reading_next;
+            burst_index <= burst_index_next;
         end
     end
 
@@ -43,12 +49,15 @@ module wr_ctrl(input logic clk,
                         pkt_end_next = pkt_end;
                         addr_offset_next = '0;
                         done_reading_next = '0;
+                        burst_index_next = '0;
+                        wr_ctrl_rdy = '0;
                     end
 
             RUN:    begin
                         if (!almost_empty) begin
-                            if ((pkt_begin + addr_offset) <= pkt_end) begin // TODO: decide if we want packet end or ending address of the packet (probably the latter)
+                            if (burst_index < burstcount) begin
                                 addr_offset_next += 'h4;
+                                burst_index_next += 1'b1;
                             end
                             else begin
                                 done_reading_next = 1'b1;
@@ -89,8 +98,8 @@ module wr_ctrl(input logic clk,
     end
 
     always_ff @(posedge clk) begin : avalon_mm
-        if (state === RUN && !almost_empty) begin // this reads cycle by cycle TODO: add burst support
-            address <= pkt_begin + addr_offset;
+        if (state_next === RUN && !almost_empty) begin  // TODO: should I rely on unclocked event?
+            address <= reg_pkt_begin + addr_offset;
             write <= 1'b1;
             writedata <= fifo_out;
         end
