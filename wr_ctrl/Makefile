@@ -1,9 +1,12 @@
 RTL_DIR = ./rtl
 TB_DIR 	= ./tb
-DO_CMD 	= "run -a;"
 
-ifeq ($(GUI),)
-	GUI_OPT = -c
+ifneq ($(wildcard ./tb/wave.do),) # TODO does not load simulation
+	DO_CMD = "do ./tb/wave.do; run -a;"
+else
+	DO_CMD 	= "run -a;"
+endif
+
 else
 	GUI_OPT = -gui
 endif

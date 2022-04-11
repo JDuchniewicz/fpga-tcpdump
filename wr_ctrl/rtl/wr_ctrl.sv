@@ -98,7 +98,7 @@ module wr_ctrl(input logic clk,
     end
 
     always_ff @(posedge clk) begin : avalon_mm
-        if (state_next === RUN && !almost_empty) begin  // TODO: should I rely on unclocked event?
+        if (state_next === RUN && !almost_empty && burstcount !== 0) begin  // TODO: should I rely on unclocked event?
             address <= reg_pkt_begin + addr_offset;
             write <= 1'b1;
             writedata <= fifo_out;
