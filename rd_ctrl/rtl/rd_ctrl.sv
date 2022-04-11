@@ -1,4 +1,3 @@
-
 module rd_ctrl(input logic clk,
                input logic reset,
                input logic rd_ctrl,
@@ -11,8 +10,8 @@ module rd_ctrl(input logic clk,
                // avalon (host)master signals
                output logic [31:0] address,
                input logic [31:0] readdata,
-               output logic read
-                // TODO: add bursts
+               output logic read,
+               output logic [15:0] burstcount
            );
 
     enum logic [1:0] { IDLE, RUN, DONE } state, state_next;
@@ -21,6 +20,10 @@ module rd_ctrl(input logic clk,
                  control_next, pkt_begin_next, pkt_end_next;
     logic [31:0] addr_offset, addr_offset_next;
     logic done_sending, done_sending_next;
+
+    logic [15:0] packet_byte_count, burst_index, burst_index_next; // TODO: size?
+
+    assign burstcount = (reg_pkt_end - reg_pkt_begin) / 4;
 
     always_ff @(posedge clk) begin : states
         if (!reset) begin
@@ -33,6 +36,7 @@ module rd_ctrl(input logic clk,
             reg_pkt_end <= pkt_end_next;
             addr_offset <= addr_offset_next;
             done_sending <= done_sending_next;
+            burst_index <= burst_index_next;
         end
     end
 
@@ -44,12 +48,15 @@ module rd_ctrl(input logic clk,
                         pkt_end_next = pkt_end;
                         addr_offset_next = '0;
                         done_sending_next = '0;
+                        burst_index_next = '0;
+                        rd_ctrl_rdy = '0;
                     end
 
             RUN:    begin
                         if (!almost_full) begin
-                            if ((pkt_begin + addr_offset) <= pkt_end) begin // TODO: decide if we want packet end or ending address of the packet (probably the latter)
+                            if (burst_index < burstcount) begin
                                 addr_offset_next += 'h4;
+                                burst_index_next += 1'b1;
                             end
                             else begin
                                 done_sending_next = 1'b1;
@@ -90,8 +97,8 @@ module rd_ctrl(input logic clk,
     end
 
     always_ff @(posedge clk) begin : avalon_mm
-        if (state === RUN && !almost_full) begin // this reads cycle by cycle TODO: add burst support
-            address <= pkt_begin + addr_offset;
+        if (state_next === RUN && !almost_full && burstcount !== 0) begin
+            address <= reg_pkt_begin + addr_offset;
             read <= 1'b1;
             fifo_in <= readdata;
         end

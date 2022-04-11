@@ -11,7 +11,6 @@ module wr_ctrl(input logic clk,
                output logic [31:0] address,
                output logic [31:0] writedata,
                output logic write,
-               // TODO: add bursts
                output logic [15:0] burstcount
            );
 

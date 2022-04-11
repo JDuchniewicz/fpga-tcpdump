@@ -12,6 +12,8 @@ module tb_top;
     logic [31:0] readdata, dummy_data;
     logic read;
 
+    logic [15:0] burstcount;
+
 
     rd_ctrl dut(.clk,
                 .reset,
@@ -24,7 +26,8 @@ module tb_top;
                 .rd_ctrl_rdy,
                 .address,
                 .readdata,
-                .read);
+                .read,
+                .burstcount);
 
     initial begin
         rd_ctrl <= '0;
@@ -49,17 +52,17 @@ module tb_top;
         for(int i = 0; i < pkt_end / 4; ++i) begin
             dummy_data <= i + 'd10;
             #20
-            $display("[RD_CTRL] T= %t sent: %d, received: %d", $time, dummy_data, readdata);
+            $display("[RD_CTRL_normal] T= %t sent: %d, received: %d", $time, dummy_data, readdata);
         end
         #20
-        $display("[RD_CTRL] T= %t sent: %d, received: %d", $time, dummy_data, readdata);
+        $display("[RD_CTRL_normal] T= %t sent: %d, received: %d", $time, dummy_data, readdata);
 
         #20
         rd_ctrl <= 1'b0;
 
         #20
-        $display("[RD_CTRL] T= %t after rd_ctrl=0 received: %d", $time, readdata);
-        $display("[RD_CTRL] T= %t Ending simulation...\n", $time);
+        $display("[RD_CTRL_normal] T= %t after rd_ctrl=0 received: %d", $time, readdata);
+        $display("[RD_CTRL_normal] T= %t Ending simulation...\n", $time);
         $exit;
     end
 
