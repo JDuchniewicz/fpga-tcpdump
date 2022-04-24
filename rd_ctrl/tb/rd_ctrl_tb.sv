@@ -14,6 +14,7 @@ module tb_top;
 
     logic [15:0] burstcount;
 
+    int i, j;
 
     rd_ctrl dut(.clk,
                 .reset,
@@ -48,6 +49,7 @@ module tb_top;
 
         // Initialize the component: 1 cycle delay between sending and
         // writing to FIFO
+        rd_ctrl <= 1'b1;
 
         for(int i = 0; i < pkt_end / 4; ++i) begin
             dummy_data <= i + 'd10;
@@ -62,7 +64,69 @@ module tb_top;
 
         #20
         $display("[RD_CTRL_normal] T= %t after rd_ctrl=0 received: %d", $time, readdata);
-        $display("[RD_CTRL_normal] T= %t Ending simulation...\n", $time);
+
+        #20
+        // add additional tests for bursting
+        // assert queue almost_full
+        //reset <= 1'b0;
+        //#20
+        //reset <= 1'b1;
+
+        rd_ctrl <= 1'b1;
+
+        for(j = 0; j < pkt_end / 8; ++j) begin
+            dummy_data <= j + 'd10;
+            #20
+            $display("[RD_CTRL_stall] T= %t dummy_data: %d, received: %d, almost_full: %d", $time, dummy_data, readdata, almost_full);
+        end
+
+        // stall one cycle of sending
+        if (j == pkt_end / 8) begin
+            almost_full <= 1'b1;
+        end
+
+        #20
+        $display("[RD_CTRL_stall] T= %t dummy_data: %d, received: %d, almost_full: %d", $time, dummy_data, readdata, almost_full);
+
+        almost_full <= 1'b0;
+
+        for(int i = j; i < pkt_end / 4; ++i) begin
+            dummy_data <= i + 'd10;
+            #20
+            $display("[RD_CTRL_stall] T= %t dummy_data: %d, received: %d, almost_full: %d", $time, dummy_data, readdata, almost_full);
+        end
+
+        #20
+        $display("[RD_CTRL_stall] T= %t dummy_data: %d, received: %d", $time, dummy_data, readdata);
+
+        #20
+        rd_ctrl <= 1'b0;
+
+        #20
+        $display("[RD_CTRL_stall] T= %t after rd_ctrl=0 received: %d", $time, readdata);
+
+        #20
+        // empty burst check
+        pkt_end <= '0;
+        rd_ctrl <= 1'b1;
+
+        for(int i = 0; i < 4; ++i) begin
+            dummy_data <= i + 'd10;
+            #20
+            $display("[RD_CTRL_empty] T= %t dummy_data: %d, received: %d", $time, dummy_data, readdata);
+        end
+
+        #20
+        $display("[RD_CTRL_empty] T= %t dummy_data: %d, received: %d", $time, dummy_data, readdata);
+
+        #20
+        rd_ctrl <= 1'b0;
+
+        #20
+        $display("[RD_CTRL] T= %t after rd_ctrl=0 received: %d", $time, readdata);
+
+        #20
+        $display("[RD_CTRL] T= %t Ending simulation...\n", $time);
         $exit;
     end
 
