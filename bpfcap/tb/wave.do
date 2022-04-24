@@ -1,0 +1,157 @@
+onerror {resume}
+quietly WaveActivateNextPane {} 0
+add wave -noupdate -expand -group top -radix hexadecimal /tb_top/clk
+add wave -noupdate -expand -group top -radix hexadecimal /tb_top/reset
+add wave -noupdate -expand -group top -radix hexadecimal /tb_top/avs_s0_address
+add wave -noupdate -expand -group top -radix hexadecimal /tb_top/avs_s0_writedata
+add wave -noupdate -expand -group top -radix hexadecimal /tb_top/avs_s0_readdata
+add wave -noupdate -expand -group top -radix hexadecimal /tb_top/avs_m0_address
+add wave -noupdate -expand -group top -radix hexadecimal /tb_top/avs_m0_readdata
+add wave -noupdate -expand -group top -radix hexadecimal /tb_top/avs_m1_address
+add wave -noupdate -expand -group top -radix hexadecimal /tb_top/avs_m1_writedata
+add wave -noupdate -expand -group top -radix hexadecimal /tb_top/avs_m0_burstcount
+add wave -noupdate -expand -group top -radix hexadecimal /tb_top/avs_m1_burstcount
+add wave -noupdate -expand -group top -radix hexadecimal /tb_top/avs_s0_write
+add wave -noupdate -expand -group top -radix hexadecimal /tb_top/avs_s0_read
+add wave -noupdate -expand -group top -radix hexadecimal /tb_top/avs_m0_read
+add wave -noupdate -expand -group top -radix hexadecimal /tb_top/avs_m1_write
+add wave -noupdate -expand -group top -radix hexadecimal /tb_top/writedata
+add wave -noupdate -expand -group top -radix hexadecimal /tb_top/readdata
+add wave -noupdate -group mm_if /tb_top/mm_if/reset
+add wave -noupdate -group mm_if /tb_top/mm_if/clock
+add wave -noupdate -group mm_if /tb_top/mm_if/address
+add wave -noupdate -group mm_if /tb_top/mm_if/byteenable
+add wave -noupdate -group mm_if /tb_top/mm_if/read
+add wave -noupdate -group mm_if /tb_top/mm_if/readdata
+add wave -noupdate -group mm_if /tb_top/mm_if/response
+add wave -noupdate -group mm_if /tb_top/mm_if/write
+add wave -noupdate -group mm_if /tb_top/mm_if/writedata
+add wave -noupdate -group mm_if /tb_top/mm_if/waitrequest
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/clk
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/reset
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/avs_s0_address
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/avs_s0_writedata
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/avs_s0_write
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/avs_s0_read
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/avs_s0_readdata
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/avs_m0_address
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/avs_m0_readdata
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/avs_m0_read
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/avs_m0_burstcount
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/avs_m1_address
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/avs_m1_writedata
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/avs_m1_write
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/avs_m1_burstcount
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/rd_ctrl_rdy
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/wr_ctrl_rdy
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/rd_ctrl
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/wr_ctrl
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/state
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/out_control
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/out_pkt_begin
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/out_pkt_end
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/usedw
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/almost_empty
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/almost_full
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/fifo_in
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/fifo_out
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/wr_ctrl_rd
+add wave -noupdate -expand -group regs -radix hexadecimal /tb_top/dut/regs/clk
+add wave -noupdate -expand -group regs -radix hexadecimal /tb_top/dut/regs/reset
+add wave -noupdate -expand -group regs -radix hexadecimal /tb_top/dut/regs/address
+add wave -noupdate -expand -group regs -radix hexadecimal /tb_top/dut/regs/read
+add wave -noupdate -expand -group regs -radix hexadecimal /tb_top/dut/regs/write
+add wave -noupdate -expand -group regs -radix hexadecimal /tb_top/dut/regs/readdata
+add wave -noupdate -expand -group regs -radix hexadecimal /tb_top/dut/regs/state
+add wave -noupdate -expand -group regs -radix hexadecimal /tb_top/dut/regs/writedata
+add wave -noupdate -expand -group regs -radix hexadecimal /tb_top/dut/regs/out_control
+add wave -noupdate -expand -group regs -radix hexadecimal /tb_top/dut/regs/out_pkt_begin
+add wave -noupdate -expand -group regs -radix hexadecimal /tb_top/dut/regs/out_pkt_end
+add wave -noupdate -expand -group regs -radix hexadecimal /tb_top/dut/regs/control
+add wave -noupdate -expand -group regs -radix hexadecimal /tb_top/dut/regs/pkt_begin
+add wave -noupdate -expand -group regs -radix hexadecimal /tb_top/dut/regs/pkt_end
+add wave -noupdate -group pkt_ctrl /tb_top/dut/packet_control/new_request
+add wave -noupdate -group pkt_ctrl /tb_top/dut/packet_control/clk
+add wave -noupdate -group pkt_ctrl /tb_top/dut/packet_control/reset
+add wave -noupdate -group pkt_ctrl /tb_top/dut/packet_control/rd_ctrl_rdy
+add wave -noupdate -group pkt_ctrl /tb_top/dut/packet_control/wr_ctrl_rdy
+add wave -noupdate -group pkt_ctrl /tb_top/dut/packet_control/rd_ctrl
+add wave -noupdate -group pkt_ctrl /tb_top/dut/packet_control/wr_ctrl
+add wave -noupdate -group pkt_ctrl /tb_top/dut/packet_control/state_out
+add wave -noupdate -group pkt_ctrl /tb_top/dut/packet_control/state
+add wave -noupdate -group pkt_ctrl /tb_top/dut/packet_control/state_next
+add wave -noupdate -group rd_ctrl /tb_top/dut/read_control/clk
+add wave -noupdate -group rd_ctrl /tb_top/dut/read_control/reset
+add wave -noupdate -group rd_ctrl /tb_top/dut/read_control/rd_ctrl
+add wave -noupdate -group rd_ctrl /tb_top/dut/read_control/almost_full
+add wave -noupdate -group rd_ctrl /tb_top/dut/read_control/control
+add wave -noupdate -group rd_ctrl /tb_top/dut/read_control/pkt_begin
+add wave -noupdate -group rd_ctrl /tb_top/dut/read_control/pkt_end
+add wave -noupdate -group rd_ctrl /tb_top/dut/read_control/fifo_in
+add wave -noupdate -group rd_ctrl /tb_top/dut/read_control/rd_ctrl_rdy
+add wave -noupdate -group rd_ctrl /tb_top/dut/read_control/address
+add wave -noupdate -group rd_ctrl /tb_top/dut/read_control/readdata
+add wave -noupdate -group rd_ctrl /tb_top/dut/read_control/read
+add wave -noupdate -group rd_ctrl /tb_top/dut/read_control/burstcount
+add wave -noupdate -group rd_ctrl /tb_top/dut/read_control/state
+add wave -noupdate -group rd_ctrl /tb_top/dut/read_control/state_next
+add wave -noupdate -group rd_ctrl /tb_top/dut/read_control/reg_control
+add wave -noupdate -group rd_ctrl /tb_top/dut/read_control/reg_pkt_begin
+add wave -noupdate -group rd_ctrl /tb_top/dut/read_control/reg_pkt_end
+add wave -noupdate -group rd_ctrl /tb_top/dut/read_control/control_next
+add wave -noupdate -group rd_ctrl /tb_top/dut/read_control/pkt_begin_next
+add wave -noupdate -group rd_ctrl /tb_top/dut/read_control/pkt_end_next
+add wave -noupdate -group rd_ctrl /tb_top/dut/read_control/addr_offset
+add wave -noupdate -group rd_ctrl /tb_top/dut/read_control/addr_offset_next
+add wave -noupdate -group rd_ctrl /tb_top/dut/read_control/done_sending
+add wave -noupdate -group rd_ctrl /tb_top/dut/read_control/done_sending_next
+add wave -noupdate -group rd_ctrl /tb_top/dut/read_control/packet_byte_count
+add wave -noupdate -group rd_ctrl /tb_top/dut/read_control/burst_index
+add wave -noupdate -group rd_ctrl /tb_top/dut/read_control/burst_index_next
+add wave -noupdate -group wr_ctrl /tb_top/dut/write_control/clk
+add wave -noupdate -group wr_ctrl /tb_top/dut/write_control/reset
+add wave -noupdate -group wr_ctrl /tb_top/dut/write_control/wr_ctrl
+add wave -noupdate -group wr_ctrl /tb_top/dut/write_control/almost_empty
+add wave -noupdate -group wr_ctrl /tb_top/dut/write_control/fifo_out
+add wave -noupdate -group wr_ctrl /tb_top/dut/write_control/wr_ctrl_rdy
+add wave -noupdate -group wr_ctrl /tb_top/dut/write_control/control
+add wave -noupdate -group wr_ctrl /tb_top/dut/write_control/pkt_begin
+add wave -noupdate -group wr_ctrl /tb_top/dut/write_control/pkt_end
+add wave -noupdate -group wr_ctrl /tb_top/dut/write_control/address
+add wave -noupdate -group wr_ctrl /tb_top/dut/write_control/writedata
+add wave -noupdate -group wr_ctrl /tb_top/dut/write_control/write
+add wave -noupdate -group wr_ctrl /tb_top/dut/write_control/burstcount
+add wave -noupdate -group wr_ctrl /tb_top/dut/write_control/state
+add wave -noupdate -group wr_ctrl /tb_top/dut/write_control/state_next
+add wave -noupdate -group wr_ctrl /tb_top/dut/write_control/reg_control
+add wave -noupdate -group wr_ctrl /tb_top/dut/write_control/reg_pkt_begin
+add wave -noupdate -group wr_ctrl /tb_top/dut/write_control/reg_pkt_end
+add wave -noupdate -group wr_ctrl /tb_top/dut/write_control/control_next
+add wave -noupdate -group wr_ctrl /tb_top/dut/write_control/pkt_begin_next
+add wave -noupdate -group wr_ctrl /tb_top/dut/write_control/pkt_end_next
+add wave -noupdate -group wr_ctrl /tb_top/dut/write_control/addr_offset
+add wave -noupdate -group wr_ctrl /tb_top/dut/write_control/addr_offset_next
+add wave -noupdate -group wr_ctrl /tb_top/dut/write_control/done_reading
+add wave -noupdate -group wr_ctrl /tb_top/dut/write_control/done_reading_next
+add wave -noupdate -group wr_ctrl /tb_top/dut/write_control/packet_byte_count
+add wave -noupdate -group wr_ctrl /tb_top/dut/write_control/burst_index
+add wave -noupdate -group wr_ctrl /tb_top/dut/write_control/burst_index_next
+add wave -noupdate -radix hexadecimal /tb_top/dut/fifo_i/data
+TreeUpdate [SetDefaultTree]
+WaveRestoreCursors {{Cursor 1} {53 ns} 0}
+quietly wave cursor active 1
+configure wave -namecolwidth 150
+configure wave -valuecolwidth 100
+configure wave -justifyvalue left
+configure wave -signalnamewidth 1
+configure wave -snapdistance 10
+configure wave -datasetprefix 0
+configure wave -rowmargin 4
+configure wave -childrowmargin 2
+configure wave -gridoffset 0
+configure wave -gridperiod 1
+configure wave -griddelta 40
+configure wave -timeline 0
+configure wave -timelineunits ns
+update
+WaveRestoreZoom {0 ns} {684 ns}

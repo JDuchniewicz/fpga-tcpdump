@@ -10,7 +10,8 @@ typedef struct
 interface avalon_mm_if
 #(
     parameter int ADDR_WIDTH = 32,
-    parameter int DATA_WIDTH = 32
+    parameter int DATA_WIDTH = 32,
+    parameter int DEBUG = 0
 )
 (
     input reset,
@@ -61,10 +62,10 @@ interface avalon_mm_if
         avalon_mm_master_cb.writedata  <= '0;
     endfunction : clear_bus
 
-    function void wait_for_reset();
+    task wait_for_reset();
         if (!reset)
             @(posedge reset);
-    endfunction: wait_for_reset
+    endtask: wait_for_reset
 
     task write_data(avalon_mm_seq_item item);
         bit [ADDR_WIDTH-1:0] addr_queue[$];
@@ -111,7 +112,7 @@ interface avalon_mm_if
 
             avalon_mm_master_cb.address <= addr_queue.pop_front();
             avalon_mm_master_cb.read    <= 'd1;
-            avalon_mm_master_cb.byteenable <= byteenable.pop_front();
+            avalon_mm_master_cb.byteenable <= byteen_queue.pop_front();
 
             if (avalon_mm_master_cb.waitrequest === 'd1)
                 @(negedge avalon_mm_master_cb.waitrequest);
