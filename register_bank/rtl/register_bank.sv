@@ -31,14 +31,14 @@ module register_bank
             pkt_end <= '0;
         end
         else begin
-            control <= { control[N-1: 1], state }; // state is 2 LSB's
+            control <= { control[N-1: 2], state }; // state is 2 LSB's
             pkt_begin <= pkt_begin;
             pkt_end <= pkt_end;
             readdata <= readdata;
 
             if (write) begin
                 case (address)
-                    3'b000 : control <= writedata; // TODO: somehow they are not updated (faulty case statement??!)
+                    3'b000 : control <= writedata;
                     3'b001 : pkt_begin <= writedata;
                     3'b010 : pkt_end <= writedata;
                 endcase

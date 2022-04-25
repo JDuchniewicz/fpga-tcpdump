@@ -1,7 +1,7 @@
 
 module tb_top;
     logic clk = 1'b0;
-    logic reset = 1'b1;
+    logic reset = 1'b0;
 
     always #10 clk = ~clk;
 

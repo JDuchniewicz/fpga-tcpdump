@@ -1,6 +1,6 @@
 module tb_top;
     logic clk = 1'b0;
-    logic reset = 1'b1;
+    logic reset = 1'b0;
 
     logic [2:0] avs_s0_address;
     logic [31:0] avs_s0_writedata, avs_s0_readdata, avs_m0_address,
@@ -29,7 +29,7 @@ module tb_top;
         mm_if.clear_bus();
 
         #20
-        reset <= 1'b0;
+        reset <= 1'b1;
 
         // start the proper testbench, load data
         // add always block that models the slaves for data receiving and
@@ -54,6 +54,7 @@ module tb_top;
         avs_s0_write <= 1'b1;
 
         #20
+        #10 // loaded after posedge
         $display("[Loading] T= %t control reg: %d", $time, avs_s0_readdata);
 
         avs_s0_address <= 3'h1;
