@@ -53,25 +53,25 @@ module tb_top;
         avs_s0_writedata <= '0;
         avs_s0_write <= 1'b1;
 
-        #20
-        #10 // loaded after posedge
-        $display("[Loading] T= %t control reg: %d", $time, avs_s0_readdata);
+        #40
+        $display("[Loading control_reg] T= %t control_reg", $time, avs_s0_readdata);
 
         avs_s0_address <= 3'h1;
         avs_s0_writedata <= 32'h20;
 
-        #20
-        $display("[Loading] T= %t pkt_begin: %d", $time, avs_s0_readdata);
+        #40
+        $display("[Loading pkt_begin] T= %t pkt_begin: %d", $time, avs_s0_readdata);
 
         avs_s0_address <= 3'h2;
         avs_s0_writedata <= 32'h28;
 
-        #20
-        $display("[Loading] T= %t pkt_end: %d", $time, avs_s0_readdata);
+        #40
+        $display("[Loading pkt_end] T= %t pkt_end: %d", $time, avs_s0_readdata);
 
         avs_s0_write <= 1'b0;
         avs_s0_read <= 1'b0;
 
+        #20
         // then supply data driving the control signals
         // ??
         // wait for 8 cycles for the data to arrive

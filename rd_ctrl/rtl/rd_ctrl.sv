@@ -40,7 +40,7 @@ module rd_ctrl(input logic clk,
         end
     end
 
-    always_comb begin : ctrl
+    always_comb begin : ctrl // TODO: thsi probably should be clocked!
         case (state)
             IDLE:   begin
                         control_next = control;

@@ -13,6 +13,7 @@ module pkt_ctrl(input logic new_request,
     always_ff @(posedge clk) begin : states
         if (!reset) begin
             state <= IDLE;
+            state_next <= IDLE;
         end
         else begin
             state <= state_next;
@@ -41,7 +42,7 @@ module pkt_ctrl(input logic new_request,
         endcase
     end
 
-    always_ff @(posedge state) begin : fsm
+    always_ff @(posedge clk) begin : fsm
         case (state)
             IDLE:   begin
                     if (new_request) begin // TODO: is this proper? (will it react)?
