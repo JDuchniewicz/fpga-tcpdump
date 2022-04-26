@@ -20,12 +20,12 @@ module bpfcap_top(input logic clk,
                   output logic [15:0] avs_m1_burstcount
                   );
 
-    logic rd_ctrl_rdy, wr_ctrl_rdy, rd_ctrl, wr_ctrl;
+    logic rd_ctrl_rdy, wr_ctrl_rdy, rd_ctrl, wr_ctrl, new_request;
     logic [1:0] state;
-    logic [31:0] out_control, out_pkt_begin, out_pkt_end;
+    logic [31:0] out_control, out_pkt_begin, out_pkt_end, last_pkt_end;
 
     logic [8:0] usedw; // unused
-    logic almost_empty, almost_full;
+    logic almost_empty, almost_full, rd_from_fifo, wr_to_fifo;
     logic [31:0] fifo_in, fifo_out;
 
     register_bank #(.N(32)) regs(.clk,
@@ -40,7 +40,7 @@ module bpfcap_top(input logic clk,
                                  .out_pkt_begin,
                                  .out_pkt_end);
 
-    pkt_ctrl packet_control (.new_request(avs_s0_write),
+    pkt_ctrl packet_control (.new_request,
                              .clk,
                              .reset,
                              .rd_ctrl_rdy,
@@ -58,6 +58,7 @@ module bpfcap_top(input logic clk,
                           .pkt_begin(out_pkt_begin),
                           .pkt_end(out_pkt_end),
                           .fifo_in,
+                          .wr_to_fifo,
                           .rd_ctrl_rdy,
                           .address(avs_m0_address),
                           .readdata(avs_m0_readdata),
@@ -73,6 +74,7 @@ module bpfcap_top(input logic clk,
                           .pkt_begin(out_pkt_begin),
                           .pkt_end(out_pkt_end),
                           .fifo_out,
+                          .rd_from_fifo,
                           .wr_ctrl_rdy,
                           .address(avs_m1_address),
                           .writedata(avs_m1_writedata),
@@ -81,13 +83,30 @@ module bpfcap_top(input logic clk,
 
     fifo fifo_i (.clock(clk),
                  .data(fifo_in),
-                 .rdreq(wr_ctrl_rd), // reversed signals here, we read mem and write data to fifo
+                 .rdreq(rd_from_fifo), // reversed signals here, we read mem and write data to fifo
                  .sclr(~reset),
-                 .wrreq(rd_ctrl_rdy), // read fifo and write to mem
+                 .wrreq(wr_to_fifo), // read fifo and write to mem
                  .almost_empty,
                  .almost_full,
                  .q(fifo_out),
                  .usedw);
+
+    always_ff @(posedge clk) begin
+        if (!reset) begin
+            last_pkt_end <= '0;
+            new_request <= '0;
+        end
+        else begin
+            last_pkt_end <= last_pkt_end;
+            new_request <= 1'b0;
+            if (avs_s0_address == 32'h2 && avs_s0_write) begin
+                last_pkt_end <= avs_s0_writedata;
+                if (avs_s0_writedata !== last_pkt_end) begin
+                    new_request <= 1'b1;
+                end
+            end
+        end
+    end
 
 endmodule : bpfcap_top
 

@@ -3,6 +3,7 @@ module wr_ctrl(input logic clk,
                input logic wr_ctrl,
                input logic almost_empty,
                input logic [31:0] fifo_out,
+               output logic rd_from_fifo,
                output logic wr_ctrl_rdy,
                input logic [31:0] control,
                input logic [31:0] pkt_begin,
@@ -19,7 +20,7 @@ module wr_ctrl(input logic clk,
     logic [31:0] reg_control, reg_pkt_begin, reg_pkt_end,
                  control_next, pkt_begin_next, pkt_end_next;
     logic [31:0] addr_offset, addr_offset_next;
-    logic done_reading, done_reading_next;
+    logic done_reading, done_reading_next, rd_from_fifo_next;
 
     logic [15:0] packet_byte_count, burst_index, burst_index_next; // TODO: size?
 
@@ -37,6 +38,7 @@ module wr_ctrl(input logic clk,
             addr_offset <= addr_offset_next;
             done_reading <= done_reading_next;
             burst_index <= burst_index_next;
+            rd_from_fifo <= rd_from_fifo_next;
         end
     end
 
@@ -50,9 +52,11 @@ module wr_ctrl(input logic clk,
                         done_reading_next = '0;
                         burst_index_next = '0;
                         wr_ctrl_rdy = '0;
+                        rd_from_fifo_next = '0;
                     end
 
             RUN:    begin
+                        //rd_from_fifo_next = 1'b1;
                         if (!almost_empty) begin
                             if (burst_index < burstcount) begin
                                 addr_offset_next += 'h4;
@@ -65,12 +69,12 @@ module wr_ctrl(input logic clk,
                     end
 
            DONE:    begin
-                    wr_ctrl_rdy = 1'b1;
+                        wr_ctrl_rdy = 1'b1;
                     end
         endcase
     end
 
-    always_comb begin : fsm
+    always_ff @(posedge clk) begin : fsm
         case (state)
             IDLE:   begin
                     if (wr_ctrl) begin

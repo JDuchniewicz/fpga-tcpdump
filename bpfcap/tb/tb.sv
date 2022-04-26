@@ -63,7 +63,7 @@ module tb_top;
         $display("[Loading pkt_begin] T= %t pkt_begin: %d", $time, avs_s0_readdata);
 
         avs_s0_address <= 3'h2;
-        avs_s0_writedata <= 32'h28;
+        avs_s0_writedata <= 32'h40; // 8 words
 
         #40
         $display("[Loading pkt_end] T= %t pkt_end: %d", $time, avs_s0_readdata);
@@ -75,6 +75,7 @@ module tb_top;
         // then supply data driving the control signals
         // ??
         // wait for 8 cycles for the data to arrive
+        //avs_m0_read <= 1'b1;
         for (int i = 0; i < 8; ++i) begin
             readdata <= 10 + i;
             #20
