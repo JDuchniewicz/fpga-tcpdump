@@ -22,7 +22,7 @@ module bpfcap_top(input logic clk,
 
     logic rd_ctrl_rdy, wr_ctrl_rdy, rd_ctrl, wr_ctrl, new_request;
     logic [1:0] state;
-    logic [31:0] out_control, out_pkt_begin, out_pkt_end, last_pkt_end;
+    logic [31:0] out_control, out_pkt_begin, out_pkt_end;
 
     logic [8:0] usedw; // unused
     logic almost_empty, almost_full, rd_from_fifo, wr_to_fifo;
@@ -93,17 +93,12 @@ module bpfcap_top(input logic clk,
 
     always_ff @(posedge clk) begin
         if (!reset) begin
-            last_pkt_end <= '0;
             new_request <= '0;
         end
         else begin
-            last_pkt_end <= last_pkt_end;
             new_request <= 1'b0;
             if (avs_s0_address == 32'h2 && avs_s0_write) begin
-                last_pkt_end <= avs_s0_writedata;
-                if (avs_s0_writedata !== last_pkt_end) begin
-                    new_request <= 1'b1;
-                end
+                new_request <= 1'b1;
             end
         end
     end

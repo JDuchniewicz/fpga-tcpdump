@@ -17,8 +17,7 @@ module rd_ctrl(input logic clk,
 
     enum logic [1:0] { IDLE, RUN, DONE } state, state_next;
 
-    logic [31:0] reg_control, reg_pkt_begin, reg_pkt_end,
-                 control_next, pkt_begin_next, pkt_end_next;
+    logic [31:0] reg_control, reg_pkt_begin, reg_pkt_end;
     logic [31:0] addr_offset, addr_offset_next;
     logic done_sending, done_sending_next, wr_to_fifo_next;
 
@@ -32,9 +31,9 @@ module rd_ctrl(input logic clk,
         end
         else begin
             state <= state_next;
-            reg_control <= control_next;
-            reg_pkt_begin <= pkt_begin_next;
-            reg_pkt_end <= pkt_end_next;
+            reg_control <= control;
+            reg_pkt_begin <= pkt_begin;
+            reg_pkt_end <= pkt_end;
             addr_offset <= addr_offset_next;
             done_sending <= done_sending_next;
             burst_index <= burst_index_next;
@@ -42,12 +41,11 @@ module rd_ctrl(input logic clk,
         end
     end
 
-    always_ff @(posedge clk) begin : ctrl // TODO: thsi probably should be clocked!
+    // several always blocks,
+
+    always_comb begin : ctrl
         case (state)
             IDLE:   begin
-                        control_next = control;
-                        pkt_begin_next = pkt_begin;
-                        pkt_end_next = pkt_end;
                         addr_offset_next = '0;
                         done_sending_next = '0;
                         burst_index_next = '0;
@@ -59,7 +57,7 @@ module rd_ctrl(input logic clk,
                         wr_to_fifo_next = 1'b1;
                         if (!almost_full) begin
                             if (burst_index < burstcount) begin
-                                addr_offset_next += 'h4;
+                                addr_offset_next = addr_offset + 'h4; // don't delay it, just use addr_offset and no next no registering // is equal address_offset + 4 (to trigger comb)
                                 burst_index_next += 1'b1;
                             end
                             else begin
@@ -101,8 +99,8 @@ module rd_ctrl(input logic clk,
     end
 
     always_ff @(posedge clk) begin : avalon_mm
-        if (state_next === RUN /*&& !almost_full */&& burstcount !== 0) begin // almost_full is held as HiZ commented out
-            address <= reg_pkt_begin + addr_offset; // TODO: fifo still displays HiZ on almost_empty/full/q/ and usedw signals WHY???
+        if (state_next === RUN && !almost_full && burstcount !== 0) begin
+            address <= reg_pkt_begin + addr_offset;
             read <= 1'b1;
             fifo_in <= readdata;
         end

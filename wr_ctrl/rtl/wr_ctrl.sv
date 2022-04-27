@@ -17,8 +17,7 @@ module wr_ctrl(input logic clk,
 
     enum logic [1:0] { IDLE, RUN, DONE } state, state_next;
 
-    logic [31:0] reg_control, reg_pkt_begin, reg_pkt_end,
-                 control_next, pkt_begin_next, pkt_end_next;
+    logic [31:0] reg_control, reg_pkt_begin, reg_pkt_end;
     logic [31:0] addr_offset, addr_offset_next;
     logic done_reading, done_reading_next, rd_from_fifo_next;
 
@@ -32,9 +31,9 @@ module wr_ctrl(input logic clk,
         end
         else begin
             state <= state_next;
-            reg_control <= control_next;
-            reg_pkt_begin <= pkt_begin_next;
-            reg_pkt_end <= pkt_end_next;
+            reg_control <= control;
+            reg_pkt_begin <= pkt_begin;
+            reg_pkt_end <= pkt_end;
             addr_offset <= addr_offset_next;
             done_reading <= done_reading_next;
             burst_index <= burst_index_next;
@@ -45,9 +44,6 @@ module wr_ctrl(input logic clk,
     always_comb begin : ctrl
         case (state)
             IDLE:   begin
-                        control_next = control;
-                        pkt_begin_next = pkt_begin;
-                        pkt_end_next = pkt_end;
                         addr_offset_next = '0;
                         done_reading_next = '0;
                         burst_index_next = '0;
@@ -56,16 +52,16 @@ module wr_ctrl(input logic clk,
                     end
 
             RUN:    begin
-                        //rd_from_fifo_next = 1'b1;
-                        if (!almost_empty) begin
+                        rd_from_fifo_next = 1'b1;
+                        //if (!almost_empty) begin
                             if (burst_index < burstcount) begin
-                                addr_offset_next += 'h4;
+                                addr_offset_next = addr_offset + 'h4;
                                 burst_index_next += 1'b1;
                             end
                             else begin
                                 done_reading_next = 1'b1;
                             end
-                        end
+                        //end
                     end
 
            DONE:    begin
@@ -101,7 +97,7 @@ module wr_ctrl(input logic clk,
     end
 
     always_ff @(posedge clk) begin : avalon_mm
-        if (state_next === RUN && !almost_empty && burstcount !== 0) begin  // TODO: should I rely on unclocked event?
+        if (state_next === RUN /*&& !almost_empty */&& burstcount !== 0) begin  // TODO: fifo immediately outputs, almost empty is triggered immediately 5 cycles delay here
             address <= reg_pkt_begin + addr_offset;
             write <= 1'b1;
             writedata <= fifo_out;

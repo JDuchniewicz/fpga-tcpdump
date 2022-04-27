@@ -1,3 +1,4 @@
+`timescale 1 ns / 1 ns
 module tb_top;
     logic clk = 1'b0;
     logic reset = 1'b0;
@@ -57,13 +58,13 @@ module tb_top;
         $display("[Loading control_reg] T= %t control_reg", $time, avs_s0_readdata);
 
         avs_s0_address <= 3'h1;
-        avs_s0_writedata <= 32'h20;
+        avs_s0_writedata <= 32'h00;
 
         #40
         $display("[Loading pkt_begin] T= %t pkt_begin: %d", $time, avs_s0_readdata);
 
         avs_s0_address <= 3'h2;
-        avs_s0_writedata <= 32'h40; // 8 words
+        avs_s0_writedata <= 32'h800; // 512 words
 
         #40
         $display("[Loading pkt_end] T= %t pkt_end: %d", $time, avs_s0_readdata);
@@ -76,7 +77,7 @@ module tb_top;
         // ??
         // wait for 8 cycles for the data to arrive
         //avs_m0_read <= 1'b1;
-        for (int i = 0; i < 8; ++i) begin
+        for (int i = 0; i < 512; ++i) begin
             readdata <= 10 + i;
             #20
             $display("[Processing] T= %t sent: %d recevied: %d", $time, readdata, writedata);
