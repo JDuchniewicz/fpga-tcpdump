@@ -43,8 +43,8 @@ module fifo (
 	rdreq,
 	sclr,
 	wrreq,
-	almost_empty,
 	almost_full,
+	empty,
 	q,
 	usedw);
 
@@ -53,8 +53,8 @@ module fifo (
 	input	  rdreq;
 	input	  sclr;
 	input	  wrreq;
-	output	  almost_empty;
 	output	  almost_full;
+	output	  empty;
 	output	[31:0]  q;
 	output	[8:0]  usedw;
 
@@ -62,8 +62,8 @@ module fifo (
 	wire  sub_wire1;
 	wire [31:0] sub_wire2;
 	wire [8:0] sub_wire3;
-	wire  almost_empty = sub_wire0;
-	wire  almost_full = sub_wire1;
+	wire  almost_full = sub_wire0;
+	wire  empty = sub_wire1;
 	wire [31:0] q = sub_wire2[31:0];
 	wire [8:0] usedw = sub_wire3[8:0];
 
@@ -73,17 +73,16 @@ module fifo (
 				.rdreq (rdreq),
 				.sclr (sclr),
 				.wrreq (wrreq),
-				.almost_empty (sub_wire0),
-				.almost_full (sub_wire1),
+				.almost_full (sub_wire0),
+				.empty (sub_wire1),
 				.q (sub_wire2),
 				.usedw (sub_wire3),
 				.aclr (),
+				.almost_empty (),
 				.eccstatus (),
-				.empty (),
 				.full ());
 	defparam
 		scfifo_component.add_ram_output_register = "OFF",
-		scfifo_component.almost_empty_value = 256,
 		scfifo_component.almost_full_value = 256,
 		scfifo_component.intended_device_family = "Cyclone V",
 		scfifo_component.lpm_numwords = 512,
@@ -101,14 +100,14 @@ endmodule
 // ============================================================
 // CNX file retrieval info
 // ============================================================
-// Retrieval info: PRIVATE: AlmostEmpty NUMERIC "1"
+// Retrieval info: PRIVATE: AlmostEmpty NUMERIC "0"
 // Retrieval info: PRIVATE: AlmostEmptyThr NUMERIC "256"
 // Retrieval info: PRIVATE: AlmostFull NUMERIC "1"
 // Retrieval info: PRIVATE: AlmostFullThr NUMERIC "256"
-// Retrieval info: PRIVATE: CLOCKS_ARE_SYNCHRONIZED NUMERIC "0"
+// Retrieval info: PRIVATE: CLOCKS_ARE_SYNCHRONIZED NUMERIC "1"
 // Retrieval info: PRIVATE: Clock NUMERIC "0"
 // Retrieval info: PRIVATE: Depth NUMERIC "512"
-// Retrieval info: PRIVATE: Empty NUMERIC "0"
+// Retrieval info: PRIVATE: Empty NUMERIC "1"
 // Retrieval info: PRIVATE: Full NUMERIC "0"
 // Retrieval info: PRIVATE: INTENDED_DEVICE_FAMILY STRING "Cyclone V"
 // Retrieval info: PRIVATE: LE_BasedFIFO NUMERIC "0"
@@ -135,7 +134,6 @@ endmodule
 // Retrieval info: PRIVATE: wsUsedW NUMERIC "0"
 // Retrieval info: LIBRARY: altera_mf altera_mf.altera_mf_components.all
 // Retrieval info: CONSTANT: ADD_RAM_OUTPUT_REGISTER STRING "OFF"
-// Retrieval info: CONSTANT: ALMOST_EMPTY_VALUE NUMERIC "256"
 // Retrieval info: CONSTANT: ALMOST_FULL_VALUE NUMERIC "256"
 // Retrieval info: CONSTANT: INTENDED_DEVICE_FAMILY STRING "Cyclone V"
 // Retrieval info: CONSTANT: LPM_NUMWORDS NUMERIC "512"
@@ -146,10 +144,10 @@ endmodule
 // Retrieval info: CONSTANT: OVERFLOW_CHECKING STRING "ON"
 // Retrieval info: CONSTANT: UNDERFLOW_CHECKING STRING "ON"
 // Retrieval info: CONSTANT: USE_EAB STRING "ON"
-// Retrieval info: USED_PORT: almost_empty 0 0 0 0 OUTPUT NODEFVAL "almost_empty"
 // Retrieval info: USED_PORT: almost_full 0 0 0 0 OUTPUT NODEFVAL "almost_full"
 // Retrieval info: USED_PORT: clock 0 0 0 0 INPUT NODEFVAL "clock"
 // Retrieval info: USED_PORT: data 0 0 32 0 INPUT NODEFVAL "data[31..0]"
+// Retrieval info: USED_PORT: empty 0 0 0 0 OUTPUT NODEFVAL "empty"
 // Retrieval info: USED_PORT: q 0 0 32 0 OUTPUT NODEFVAL "q[31..0]"
 // Retrieval info: USED_PORT: rdreq 0 0 0 0 INPUT NODEFVAL "rdreq"
 // Retrieval info: USED_PORT: sclr 0 0 0 0 INPUT NODEFVAL "sclr"
@@ -160,8 +158,8 @@ endmodule
 // Retrieval info: CONNECT: @rdreq 0 0 0 0 rdreq 0 0 0 0
 // Retrieval info: CONNECT: @sclr 0 0 0 0 sclr 0 0 0 0
 // Retrieval info: CONNECT: @wrreq 0 0 0 0 wrreq 0 0 0 0
-// Retrieval info: CONNECT: almost_empty 0 0 0 0 @almost_empty 0 0 0 0
 // Retrieval info: CONNECT: almost_full 0 0 0 0 @almost_full 0 0 0 0
+// Retrieval info: CONNECT: empty 0 0 0 0 @empty 0 0 0 0
 // Retrieval info: CONNECT: q 0 0 32 0 @q 0 0 32 0
 // Retrieval info: CONNECT: usedw 0 0 9 0 @usedw 0 0 9 0
 // Retrieval info: GEN_FILE: TYPE_NORMAL fifo.v TRUE

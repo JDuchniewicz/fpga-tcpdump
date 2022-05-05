@@ -25,7 +25,7 @@ module bpfcap_top(input logic clk,
     logic [31:0] out_control, out_pkt_begin, out_pkt_end;
 
     logic [8:0] usedw; // unused
-    logic almost_empty, almost_full, rd_from_fifo, wr_to_fifo;
+    logic empty, almost_full, rd_from_fifo, wr_to_fifo;
     logic [31:0] fifo_in, fifo_out;
 
     register_bank #(.N(32)) regs(.clk,
@@ -68,7 +68,7 @@ module bpfcap_top(input logic clk,
     // this reads from FIFO and transfers the data to be written in SDRAM/HPS
     wr_ctrl write_control(.clk,
                           .reset,
-                          .almost_empty,
+                          .empty,
                           .wr_ctrl,
                           .control(out_control),
                           .pkt_begin(out_pkt_begin),
@@ -86,7 +86,7 @@ module bpfcap_top(input logic clk,
                  .rdreq(rd_from_fifo), // reversed signals here, we read mem and write data to fifo
                  .sclr(~reset),
                  .wrreq(wr_to_fifo), // read fifo and write to mem
-                 .almost_empty,
+                 .empty,
                  .almost_full,
                  .q(fifo_out),
                  .usedw);

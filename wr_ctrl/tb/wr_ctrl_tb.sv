@@ -5,7 +5,7 @@ module tb_top;
 
     always #10 clk = ~clk;
 
-    logic wr_ctrl, almost_empty, wr_ctrl_rdy;
+    logic wr_ctrl, empty, wr_ctrl_rdy;
     logic [31:0] control, pkt_begin, pkt_end, fifo_out;
 
     logic [31:0] address;
@@ -19,7 +19,7 @@ module tb_top;
     wr_ctrl dut(.clk,
                 .reset,
                 .wr_ctrl,
-                .almost_empty,
+                .empty,
                 .control,
                 .pkt_begin,
                 .pkt_end,
@@ -32,7 +32,7 @@ module tb_top;
 
     initial begin
         wr_ctrl <= '0;
-        almost_empty <= '0;
+        empty <= '0;
 
         control <= '0;
         pkt_begin <= '0;
@@ -64,7 +64,7 @@ module tb_top;
 
         #20
         // add additional tests for bursting
-        // assert queue almost_empty
+        // assert queue empty
         //reset <= 1'b0;
         //#20
         //reset <= 1'b1;
@@ -74,23 +74,23 @@ module tb_top;
         for(j = 0; j < pkt_end / 8; ++j) begin
             fifo_out <= j + 'd10;
             #20
-            $display("[WR_CTRL_stall] T= %t fifo_out: %d, received: %d, almost_empty: %d", $time, fifo_out, data_out, almost_empty);
+            $display("[WR_CTRL_stall] T= %t fifo_out: %d, received: %d, empty: %d", $time, fifo_out, data_out, empty);
         end
 
         // stall one cycle of sending
         if (j == pkt_end / 8) begin
-            almost_empty <= 1'b1;
+            empty <= 1'b1;
         end
 
         #20
-        $display("[WR_CTRL_stall] T= %t fifo_out: %d, received: %d, almost_empty: %d", $time, fifo_out, data_out, almost_empty);
+        $display("[WR_CTRL_stall] T= %t fifo_out: %d, received: %d, empty: %d", $time, fifo_out, data_out, empty);
 
-        almost_empty <= 1'b0;
+        empty <= 1'b0;
 
         for(int i = j; i < pkt_end / 4; ++i) begin
             fifo_out <= i + 'd10;
             #20
-            $display("[WR_CTRL_stall] T= %t fifo_out: %d, received: %d, almost_empty: %d", $time, fifo_out, data_out, almost_empty);
+            $display("[WR_CTRL_stall] T= %t fifo_out: %d, received: %d, empty: %d", $time, fifo_out, data_out, empty);
         end
 
         #20
