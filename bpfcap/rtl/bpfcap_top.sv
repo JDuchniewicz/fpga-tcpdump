@@ -13,11 +13,14 @@ module bpfcap_top(input logic clk,
                   input logic [31:0] avs_m0_readdata,
                   output logic avs_m0_read,
                   output logic [15:0] avs_m0_burstcount,
+                  input logic avs_m0_readdatavalid,
+                  input logic avs_m0_waitrequest, // TODO: add support of these pins
                   // second host (wr_ctrl)
                   output logic [31:0] avs_m1_address,
                   output logic [31:0] avs_m1_writedata,
                   output logic avs_m1_write,
-                  output logic [15:0] avs_m1_burstcount
+                  output logic [15:0] avs_m1_burstcount,
+                  input logic avs_m1_waitrequest
                   );
 
     logic rd_ctrl_rdy, wr_ctrl_rdy, rd_ctrl, wr_ctrl, new_request;
@@ -63,7 +66,9 @@ module bpfcap_top(input logic clk,
                           .address(avs_m0_address),
                           .readdata(avs_m0_readdata),
                           .read(avs_m0_read),
-                          .burstcount(avs_m0_burstcount));
+                          .burstcount(avs_m0_burstcount),
+                          .readdatavalid(avs_m0_readdatavalid),
+                          .waitrequest(avs_m0_waitrequest));
 
     // this reads from FIFO and transfers the data to be written in SDRAM/HPS
     wr_ctrl write_control(.clk,
@@ -79,17 +84,18 @@ module bpfcap_top(input logic clk,
                           .address(avs_m1_address),
                           .writedata(avs_m1_writedata),
                           .write(avs_m1_write),
-                          .burstcount(avs_m1_burstcount));
+                          .burstcount(avs_m1_burstcount),
+                          .waitrequest(avs_m1_waitrequest));
 
     fifo fifo_i (.clock(clk),
                  .data(fifo_in),
                  .rdreq(rd_from_fifo), // reversed signals here, we read mem and write data to fifo
                  .sclr(~reset),
                  .wrreq(wr_to_fifo), // read fifo and write to mem
-                 .empty,
-                 .almost_full,
+                 .empty(empty), // need to have them explicitly connected
+                 .almost_full(almost_full),
                  .q(fifo_out),
-                 .usedw);
+                 .usedw(usedw));
 
     always_ff @(posedge clk) begin
         if (!reset) begin

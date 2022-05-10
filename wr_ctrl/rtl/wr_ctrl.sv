@@ -12,7 +12,8 @@ module wr_ctrl(input logic clk,
                output logic [31:0] address,
                output logic [31:0] writedata,
                output logic write,
-               output logic [15:0] burstcount
+               output logic [15:0] burstcount,
+               input logic waitrequest
            );
 
     enum logic [1:0] { IDLE, RUN, DONE } state, state_next;
@@ -52,6 +53,10 @@ module wr_ctrl(input logic clk,
                     end
 
             RUN:    begin
+                        addr_offset_next = addr_offset;
+                        done_reading_next = done_reading;
+                        burst_index_next = burst_index;
+                        wr_ctrl_rdy = '0;
                         rd_from_fifo_next = 1'b1;
                         if (!empty) begin
                             if (burst_index < burstcount) begin
@@ -65,6 +70,10 @@ module wr_ctrl(input logic clk,
                     end
 
            DONE:    begin
+                        addr_offset_next = addr_offset;
+                        done_reading_next = done_reading;
+                        burst_index_next = burst_index;
+                        rd_from_fifo_next = '0;
                         wr_ctrl_rdy = 1'b1;
                     end
         endcase
@@ -97,7 +106,7 @@ module wr_ctrl(input logic clk,
     end
 
     always_ff @(posedge clk) begin : avalon_mm
-        if (state_next === RUN && !empty && burstcount !== 0) begin  // TODO: fifo immediately outputs, almost empty is triggered immediately 5 cycles delay here
+        if (state_next === RUN && !empty && burstcount !== 0 && !waitrequest) begin  // TODO: fifo immediately outputs, almost empty is triggered immediately 5 cycles delay here
             address <= reg_pkt_begin + addr_offset;
             write <= 1'b1;
             writedata <= fifo_out;

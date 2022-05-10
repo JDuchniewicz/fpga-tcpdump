@@ -5,7 +5,7 @@ module tb_top;
 
     always #10 clk = ~clk;
 
-    logic wr_ctrl, empty, wr_ctrl_rdy;
+    logic wr_ctrl, empty, wr_ctrl_rdy, waitrequest, rd_from_fifo;
     logic [31:0] control, pkt_begin, pkt_end, fifo_out;
 
     logic [31:0] address;
@@ -24,15 +24,18 @@ module tb_top;
                 .pkt_begin,
                 .pkt_end,
                 .fifo_out,
+                .rd_from_fifo,
                 .wr_ctrl_rdy,
                 .address,
                 .writedata,
                 .write,
-                .burstcount);
+                .burstcount,
+                .waitrequest);
 
     initial begin
         wr_ctrl <= '0;
         empty <= '0;
+        waitrequest <= '0;
 
         control <= '0;
         pkt_begin <= '0;
