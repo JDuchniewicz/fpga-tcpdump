@@ -8,6 +8,7 @@ module wr_ctrl(input logic clk,
                input logic [31:0] control,
                input logic [31:0] pkt_begin,
                input logic [31:0] pkt_end,
+               input logic [31:0] write_address,
                // avalon (host)master signals
                output logic [31:0] address,
                output logic [31:0] writedata,
@@ -18,7 +19,7 @@ module wr_ctrl(input logic clk,
 
     enum logic [1:0] { IDLE, RUN, DONE } state, state_next;
 
-    logic [31:0] reg_control, reg_pkt_begin, reg_pkt_end;
+    logic [31:0] reg_control, reg_pkt_begin, reg_pkt_end, reg_write_address;
     logic [31:0] addr_offset, addr_offset_next;
     logic done_reading, done_reading_next, rd_from_fifo_next;
 
@@ -35,6 +36,7 @@ module wr_ctrl(input logic clk,
             reg_control <= control;
             reg_pkt_begin <= pkt_begin;
             reg_pkt_end <= pkt_end;
+            reg_write_address <= write_address;
             addr_offset <= addr_offset_next;
             done_reading <= done_reading_next;
             burst_index <= burst_index_next;
@@ -107,7 +109,7 @@ module wr_ctrl(input logic clk,
 
     always_ff @(posedge clk) begin : avalon_mm
         if (state_next === RUN && !empty && burstcount !== 0 && !waitrequest) begin  // TODO: fifo immediately outputs, almost empty is triggered immediately 5 cycles delay here
-            address <= reg_pkt_begin + addr_offset;
+            address <= reg_write_address + addr_offset; // output the data to a buffer that we mapped and provided
             write <= 1'b1;
             writedata <= fifo_out;
         end

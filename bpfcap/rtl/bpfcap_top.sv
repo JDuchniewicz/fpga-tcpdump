@@ -25,7 +25,7 @@ module bpfcap_top(input logic clk,
 
     logic rd_ctrl_rdy, wr_ctrl_rdy, rd_ctrl, wr_ctrl, new_request;
     logic [1:0] state;
-    logic [31:0] out_control, out_pkt_begin, out_pkt_end;
+    logic [31:0] out_control, out_pkt_begin, out_pkt_end, out_write_address;
 
     logic [8:0] usedw; // unused
     logic empty, almost_full, rd_from_fifo, wr_to_fifo;
@@ -41,7 +41,8 @@ module bpfcap_top(input logic clk,
                                  .writedata(avs_s0_writedata),
                                  .out_control,
                                  .out_pkt_begin,
-                                 .out_pkt_end);
+                                 .out_pkt_end,
+                                 .out_write_address);
 
     pkt_ctrl packet_control (.new_request,
                              .clk,
@@ -78,6 +79,7 @@ module bpfcap_top(input logic clk,
                           .control(out_control),
                           .pkt_begin(out_pkt_begin),
                           .pkt_end(out_pkt_end),
+                          .write_address(out_write_address),
                           .fifo_out,
                           .rd_from_fifo,
                           .wr_ctrl_rdy,
@@ -103,7 +105,7 @@ module bpfcap_top(input logic clk,
         end
         else begin
             new_request <= 1'b0;
-            if (avs_s0_address == 32'h2 && avs_s0_write) begin
+            if (avs_s0_address == 32'h3 && avs_s0_write) begin
                 new_request <= 1'b1;
             end
         end

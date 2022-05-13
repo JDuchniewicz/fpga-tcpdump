@@ -6,7 +6,7 @@ module tb_top;
     always #10 clk = ~clk;
 
     logic wr_ctrl, empty, wr_ctrl_rdy, waitrequest, rd_from_fifo;
-    logic [31:0] control, pkt_begin, pkt_end, fifo_out;
+    logic [31:0] control, pkt_begin, pkt_end, write_address, fifo_out;
 
     logic [31:0] address;
     logic [31:0] writedata, data_out;
@@ -23,6 +23,7 @@ module tb_top;
                 .control,
                 .pkt_begin,
                 .pkt_end,
+                .write_address,
                 .fifo_out,
                 .rd_from_fifo,
                 .wr_ctrl_rdy,
@@ -40,6 +41,7 @@ module tb_top;
         control <= '0;
         pkt_begin <= '0;
         pkt_end <= 'd32; // 8 words
+        write_address <= 'h8000;
 
         data_out <= '0;
 
@@ -54,16 +56,16 @@ module tb_top;
         for(int i = 0; i < pkt_end / 4; ++i) begin
             fifo_out <= i + 'd10;
             #20
-            $display("[WR_CTRL_normal] T= %t fifo_out: %d, received: %d, burstcount: %d", $time, fifo_out, data_out, burstcount);
+            $display("[WR_CTRL_normal] T= %t fifo_out: %d, received: %d, burstcount: %d, write_address: %x", $time, fifo_out, data_out, burstcount, address);
         end
         #20
-        $display("[WR_CTRL_normal] T= %t fifo_out: %d, received: %d", $time, fifo_out, data_out);
+        $display("[WR_CTRL_normal] T= %t fifo_out: %d, received: %d, write_address: %x", $time, fifo_out, data_out, address);
 
         #20
         wr_ctrl <= 1'b0;
 
         #20
-        $display("[WR_CTRL_normal] T= %t after wr_ctrl=0 received: %d", $time, data_out);
+        $display("[WR_CTRL_normal] T= %t after wr_ctrl=0 received: %d, write_address: %x", $time, data_out, address);
 
         #20
         // add additional tests for bursting
@@ -77,7 +79,7 @@ module tb_top;
         for(j = 0; j < pkt_end / 8; ++j) begin
             fifo_out <= j + 'd10;
             #20
-            $display("[WR_CTRL_stall] T= %t fifo_out: %d, received: %d, empty: %d", $time, fifo_out, data_out, empty);
+            $display("[WR_CTRL_stall] T= %t fifo_out: %d, received: %d, empty: %d, write_address: %x", $time, fifo_out, data_out, empty, address);
         end
 
         // stall one cycle of sending
@@ -86,24 +88,24 @@ module tb_top;
         end
 
         #20
-        $display("[WR_CTRL_stall] T= %t fifo_out: %d, received: %d, empty: %d", $time, fifo_out, data_out, empty);
+        $display("[WR_CTRL_stall] T= %t fifo_out: %d, received: %d, empty: %d, write_address: %x", $time, fifo_out, data_out, empty, address);
 
         empty <= 1'b0;
 
         for(int i = j; i < pkt_end / 4; ++i) begin
             fifo_out <= i + 'd10;
             #20
-            $display("[WR_CTRL_stall] T= %t fifo_out: %d, received: %d, empty: %d", $time, fifo_out, data_out, empty);
+            $display("[WR_CTRL_stall] T= %t fifo_out: %d, received: %d, empty: %d, write_address: %x", $time, fifo_out, data_out, empty, address);
         end
 
         #20
-        $display("[WR_CTRL_stall] T= %t fifo_out: %d, received: %d", $time, fifo_out, data_out);
+        $display("[WR_CTRL_stall] T= %t fifo_out: %d, received: %d, write_address: %x", $time, fifo_out, data_out, address);
 
         #20
         wr_ctrl <= 1'b0;
 
         #20
-        $display("[WR_CTRL_stall] T= %t after wr_ctrl=0 received: %d", $time, data_out);
+        $display("[WR_CTRL_stall] T= %t after wr_ctrl=0 received: %d, write_address: %x", $time, data_out, address);
 
         #20
         // empty burst check
@@ -113,17 +115,17 @@ module tb_top;
         for(int i = 0; i < 4; ++i) begin
             fifo_out <= i + 'd10;
             #20
-            $display("[WR_CTRL_empty] T= %t fifo_out: %d, received: %d", $time, fifo_out, data_out);
+            $display("[WR_CTRL_empty] T= %t fifo_out: %d, received: %d, write_address: %x", $time, fifo_out, data_out, address);
         end
 
         #20
-        $display("[WR_CTRL_empty] T= %t fifo_out: %d, received: %d", $time, fifo_out, data_out);
+        $display("[WR_CTRL_empty] T= %t fifo_out: %d, received: %d, write_address: %x", $time, fifo_out, data_out, address);
 
         #20
         wr_ctrl <= 1'b0;
 
         #20
-        $display("[WR_CTRL] T= %t after wr_ctrl=0 received: %d", $time, data_out);
+        $display("[WR_CTRL] T= %t after wr_ctrl=0 received: %d, write_address: %x", $time, data_out, address);
 
         #20
         $display("[WR_CTRL] T= %t Ending simulation...\n", $time);

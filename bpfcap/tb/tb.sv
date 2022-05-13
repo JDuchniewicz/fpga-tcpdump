@@ -7,7 +7,9 @@ module tb_top;
     logic [31:0] avs_s0_writedata, avs_s0_readdata, avs_m0_address,
                  avs_m0_readdata, avs_m1_address, avs_m1_writedata;
     logic [15:0] avs_m0_burstcount, avs_m1_burstcount;
-    logic avs_s0_write, avs_s0_read, avs_m0_read, avs_m1_write;
+    logic avs_s0_write, avs_s0_read, avs_m0_read, avs_m1_write,
+          avs_m0_readdatavalid, avs_m0_waitrequest, avs_m1_waitrequest;
+
 
     logic [31:0] writedata, readdata;
 
@@ -25,6 +27,10 @@ module tb_top;
         avs_m0_readdata <= '0;
         avs_s0_write <= '0;
         avs_s0_read <= '0;
+
+        avs_m0_waitrequest <= '0;
+        avs_m1_waitrequest <= '0;
+        avs_m0_readdatavalid <= '1;
 
         mm_if.wait_for_reset();
         mm_if.clear_bus();
@@ -50,6 +56,7 @@ module tb_top;
         // 0x0 -> control
         // 0x1 -> pkt_begin
         // 0x2 -> pkt_end
+        // 0x3 -> write_address
         avs_s0_address <= 3'h0;
         avs_s0_writedata <= '0;
         avs_s0_write <= 1'b1;
@@ -69,6 +76,12 @@ module tb_top;
         #40
         $display("[Loading pkt_end] T= %t pkt_end: %d", $time, avs_s0_readdata);
 
+        avs_s0_address <= 3'h3;
+        avs_s0_writedata <= 32'h8000; // arbitrary address
+
+        #40
+        $display("[Loading write_address] T= %t write_address: %x", $time, avs_s0_readdata);
+
         avs_s0_write <= 1'b0;
         avs_s0_read <= 1'b0;
 
@@ -80,7 +93,7 @@ module tb_top;
         for (int i = 0; i < 512; ++i) begin
             readdata <= 10 + i;
             #20
-            $display("[Processing] T= %t sent: %d recevied: %d", $time, readdata, writedata);
+            $display("[Processing] T= %t sent: %d recevied: %d, write_address: %x", $time, readdata, writedata, avs_m1_address);
         end
 
         $exit;
