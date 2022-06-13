@@ -71,7 +71,7 @@ module tb_top;
         $display("[Loading pkt_begin] T= %t pkt_begin: %d", $time, avs_s0_readdata);
 
         avs_s0_address <= 3'h2;
-        avs_s0_writedata <= 32'h800; // 512 words
+        avs_s0_writedata <= 32'h40; // 16 words * 4 bytes
 
         #40
         $display("[Loading pkt_end] T= %t pkt_end: %d", $time, avs_s0_readdata);
@@ -82,15 +82,15 @@ module tb_top;
         #40
         $display("[Loading write_address] T= %t write_address: %x", $time, avs_s0_readdata);
 
+        #20
         avs_s0_write <= 1'b0;
         avs_s0_read <= 1'b0;
 
-        #20
         // then supply data driving the control signals
         // ??
         // wait for 8 cycles for the data to arrive
         //avs_m0_read <= 1'b1;
-        for (int i = 0; i < 512; ++i) begin
+        for (int i = 0; i < 16; ++i) begin
             readdata <= 10 + i;
             #20
             $display("[Processing] T= %t sent: %d recevied: %d, write_address: %x", $time, readdata, writedata, avs_m1_address);

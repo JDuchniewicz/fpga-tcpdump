@@ -62,7 +62,7 @@ module rd_ctrl(input logic clk,
                         rd_ctrl_rdy = '0;
                         wr_to_fifo_next = 1'b1;
 
-                        if (!almost_full) begin
+                        if (!almost_full && !waitrequest) begin
                             if (burst_index < burstcount) begin
                                 addr_offset_next = addr_offset + 'h4; // don't delay it, just use addr_offset and no next no registering // is equal address_offset + 4 (to trigger comb)
                                 burst_index_next += 1'b1;
@@ -110,7 +110,7 @@ module rd_ctrl(input logic clk,
     end
 
     always_ff @(posedge clk) begin : avalon_mm
-        if (state_next === RUN && !almost_full && burstcount !== 0 && !waitrequest && readdatavalid) begin
+        if (state_next === RUN && !almost_full && burstcount !== 0) begin
             address <= reg_pkt_begin + addr_offset;
             read <= 1'b1;
             fifo_in <= readdata;
