@@ -25,7 +25,16 @@ module rd_ctrl(input logic clk,
 
     logic [15:0] packet_byte_count, burst_index, burst_index_next; // TODO: size? (packet_byte_count??? used???)
 
-    assign burstcount = (reg_pkt_end - reg_pkt_begin) / 4;
+    assign burstcount = (reg_pkt_end - reg_pkt_begin); // TODO: add fragmentatio
+    // counter that counts number of words left to be read (decremented until
+    // 0)
+    // decrement the counter by burstcount until zero
+    // set up max burstcount 256 (or 16)
+    // burscount = max(16, nr_of_words)
+    // everything in bytes
+    // another counter that counts the number of bytes left in one burst
+    // transaction
+    // add separate clocked process
 
     always_ff @(posedge clk) begin : states
         if (!reset) begin
@@ -64,7 +73,7 @@ module rd_ctrl(input logic clk,
 
                         if (!almost_full && !waitrequest) begin
                             if (burst_index < burstcount) begin
-                                addr_offset_next = addr_offset + 'h4; // don't delay it, just use addr_offset and no next no registering // is equal address_offset + 4 (to trigger comb)
+                                addr_offset_next = addr_offset + burstcount; // don't delay it, just use addr_offset and no next no registering // is equal address_offset + 4 (to trigger comb)
                                 burst_index_next += 1'b1;
                             end
                             else begin
@@ -113,7 +122,7 @@ module rd_ctrl(input logic clk,
         if (state_next === RUN && !almost_full && burstcount !== 0) begin
             address <= reg_pkt_begin + addr_offset;
             read <= 1'b1;
-            fifo_in <= readdata;
+            fifo_in <= readdata; // can only read data when readdatavalid
         end
         else begin
             address <= address;

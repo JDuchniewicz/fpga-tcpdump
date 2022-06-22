@@ -127,6 +127,33 @@ module tb_top;
         #20
         $display("[WR_CTRL] T= %t after wr_ctrl=0 received: %d, write_address: %x", $time, data_out, address);
 
+        control <= '0;
+        pkt_begin <= '0;
+        pkt_end <= 'd32; // 8 words
+        write_address <= 'h8000;
+        wr_ctrl <= 1'b1;
+        #20
+
+        for(int i = 0; i < pkt_end / 4; ++i) begin
+            fifo_out <= i + 'd10;
+            waitrequest <= 1'b0;
+            if (i == 2 || i == 5) begin
+                waitrequest <= 1'b1;
+            end
+            #20
+            $display("[WR_CTRL_waitrequest] T= %t fifo_out: %d, received: %d, burstcount: %d, write_address: %x, waitrequest: %x",
+                        $time, fifo_out, data_out, burstcount, address, waitrequest);
+        end
+        #20
+        $display("[WR_CTRL_waitrequest] T= %t fifo_out: %d, received: %d, write_address: %x, waitrequest: %x",
+                    $time, fifo_out, data_out, address, waitrequest);
+
+        #20
+        wr_ctrl <= 1'b0;
+
+        #20
+        $display("[WR_CTRL_waitrequest] T= %t after wr_ctrl=0 received: %d, write_address: %x, waitrequest: %x", $time, data_out, address, waitrequest);
+
         #20
         $display("[WR_CTRL] T= %t Ending simulation...\n", $time);
         $exit;
