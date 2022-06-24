@@ -113,7 +113,7 @@ module wr_ctrl(input logic clk,
             remaining_burst_count <= burstcount;
         end
         else begin
-            if (remaining_burst_count !== 0) begin
+            if (remaining_burst_count !== 0) begin // TODO: should I partition it into smaller bursts as in read?
                 remaining_burst_count <= remaining_burst_count - 16'b1;
             end
             else begin

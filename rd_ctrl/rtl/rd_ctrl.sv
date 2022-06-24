@@ -20,12 +20,12 @@ module rd_ctrl(input logic clk,
     enum logic [1:0] { IDLE, RUN, DONE } state, state_next;
 
     logic [31:0] reg_control, reg_pkt_begin, reg_pkt_end;
-    logic [31:0] addr_offset, addr_offset_next;
-    logic done_sending, done_sending_next, wr_to_fifo_next;
+    logic done_sending, start_transfer;
 
-    logic [15:0] packet_byte_count, burst_index, burst_index_next; // TODO: size? (packet_byte_count??? used???)
+    logic [15:0] total_burst_count, total_burst_remaining,
+                 burst_segment_remaining_count;
 
-    assign burstcount = (reg_pkt_end - reg_pkt_begin); // TODO: add fragmentatio
+    assign total_burst_count = (reg_pkt_end - reg_pkt_begin);
     // counter that counts number of words left to be read (decremented until
     // 0)
     // decrement the counter by burstcount until zero
@@ -45,51 +45,7 @@ module rd_ctrl(input logic clk,
             reg_control <= control;
             reg_pkt_begin <= pkt_begin;
             reg_pkt_end <= pkt_end;
-            addr_offset <= addr_offset_next;
-            done_sending <= done_sending_next;
-            burst_index <= burst_index_next;
-            wr_to_fifo <= wr_to_fifo_next;
         end
-    end
-
-    // several always blocks,
-
-    always_comb begin : ctrl
-        case (state)
-            IDLE:   begin
-                        addr_offset_next = '0;
-                        done_sending_next = '0;
-                        burst_index_next = '0;
-                        rd_ctrl_rdy = '0;
-                        wr_to_fifo_next = '0;
-                    end
-
-            RUN:    begin
-                        addr_offset_next = addr_offset;
-                        done_sending_next = done_sending;
-                        burst_index_next = burst_index;
-                        rd_ctrl_rdy = '0;
-                        wr_to_fifo_next = 1'b1;
-
-                        if (!almost_full && !waitrequest) begin
-                            if (burst_index < burstcount) begin
-                                addr_offset_next = addr_offset + burstcount; // don't delay it, just use addr_offset and no next no registering // is equal address_offset + 4 (to trigger comb)
-                                burst_index_next += 1'b1;
-                            end
-                            else begin
-                                done_sending_next = 1'b1;
-                            end
-                        end
-                    end
-
-           DONE:    begin
-                        addr_offset_next = '0;
-                        done_sending_next = '0;
-                        burst_index_next = '0;
-                        wr_to_fifo_next = '0;
-                        rd_ctrl_rdy = 1'b1;
-                    end
-        endcase
     end
 
     always_comb begin : fsm
@@ -113,21 +69,78 @@ module rd_ctrl(input logic clk,
                     end
 
             DONE:   begin
-                        state_next = IDLE;
+                        state_next = IDLE; // TODO: debug why states oscillate several times here
                     end
         endcase
     end
 
-    always_ff @(posedge clk) begin : avalon_mm
-        if (state_next === RUN && !almost_full && burstcount !== 0) begin
-            address <= reg_pkt_begin + addr_offset;
-            read <= 1'b1;
-            fifo_in <= readdata; // can only read data when readdatavalid
+    always_ff @(posedge clk) begin : avalon_mm_ctrl
+        if (state_next === RUN && !almost_full && total_burst_remaining !== 0) begin
+            address <= reg_pkt_begin;
         end
         else begin
             address <= address;
+        end
+
+        if (state == IDLE && state_next == RUN) begin
+            start_transfer <= 1'b1;
+        end
+        else begin
+            start_transfer <= 1'b0;
+        end
+    end
+
+    always_ff @(posedge clk) begin : avalon_mm_tx
+        rd_ctrl_rdy <= 1'b0;
+        done_sending <= 1'b0;
+        if (!almost_full) begin
+            read <= 1'b1;
+        end
+        else begin
             read <= 1'b0;
+        end
+
+        if (readdatavalid) begin
+            wr_to_fifo <= 1'b1;
+            fifo_in <= readdata;
+        end
+        else begin
+            wr_to_fifo <= 1'b0;
             fifo_in <= fifo_in;
+        end
+
+        if (start_transfer) begin
+            total_burst_remaining <= total_burst_count;
+            if (total_burst_count < 16) begin
+                burstcount <= total_burst_count;
+                burst_segment_remaining_count <= total_burst_count;
+            end
+            else begin
+                burstcount <= 16;
+                burst_segment_remaining_count <= 16;
+            end
+        end
+        else begin
+            if (burst_segment_remaining_count !== 0) begin
+                total_burst_remaining <= total_burst_remaining;
+                burst_segment_remaining_count <= burst_segment_remaining_count - 16'b1;
+            end
+            else begin
+                total_burst_remaining <= total_burst_remaining - burstcount;
+                if (total_burst_remaining - burstcount < 16 && total_burst_remaining !== 0) begin
+                    burstcount <= total_burst_remaining - burstcount;
+                    burst_segment_remaining_count <= total_burst_remaining - burstcount;
+                end
+                else begin
+                    burstcount <= 16;
+                    burst_segment_remaining_count <= 16;
+                end
+            end
+
+            if (total_burst_remaining === 0 && !done_sending && state == RUN) begin // just trigger it for one cycle
+                rd_ctrl_rdy <= 1'b1;
+                done_sending <= 1'b1;
+            end
         end
     end
 endmodule
