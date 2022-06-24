@@ -76,7 +76,7 @@ module rd_ctrl(input logic clk,
 
     always_ff @(posedge clk) begin : avalon_mm_ctrl
         if (state_next === RUN && !almost_full && total_burst_remaining !== 0) begin
-            address <= reg_pkt_begin;
+            address <= reg_pkt_begin; // address should be incremented on every fragmented transaction
         end
         else begin
             address <= address;
@@ -93,14 +93,14 @@ module rd_ctrl(input logic clk,
     always_ff @(posedge clk) begin : avalon_mm_tx
         rd_ctrl_rdy <= 1'b0;
         done_sending <= 1'b0;
-        if (!almost_full) begin
+        if (state == RUN && !almost_full) begin
             read <= 1'b1;
         end
         else begin
             read <= 1'b0;
         end
 
-        if (readdatavalid) begin
+        if (state == RUN && readdatavalid) begin
             wr_to_fifo <= 1'b1;
             fifo_in <= readdata;
         end

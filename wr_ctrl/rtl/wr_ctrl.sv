@@ -37,7 +37,7 @@ module wr_ctrl(input logic clk,
         end
         else begin
             state <= state_next;
-            reg_control <= control;
+            reg_control <= control; // maybe no need to latch
             reg_pkt_begin <= pkt_begin;
             reg_pkt_end <= pkt_end;
             reg_write_address <= write_address;
@@ -72,7 +72,7 @@ module wr_ctrl(input logic clk,
 
     always_ff @(posedge clk) begin : avalon_mm_ctrl
         if (state_next === RUN && !empty && burstcount !== 0) begin  // TODO: fifo immediately outputs, almost empty is triggered immediately 5 cycles delay here
-            address <= reg_write_address;
+            address <= reg_write_address; // address
             // kickoff the transfer, store bustcount
             // set address on the bus
             // as soon as waitrequest is down, remove address from the bus,
@@ -80,10 +80,12 @@ module wr_ctrl(input logic clk,
         end
         else begin
             address <= address;
-        end
+        end // TOOD:remove
 
         if (state == IDLE && state_next == RUN) begin
+            // latch once all the data from 40-45
             start_transfer <= 1'b1;
+            address <= reg_write_address; // assign the address above
         end
         else begin
             start_transfer <= 1'b0;
@@ -93,20 +95,20 @@ module wr_ctrl(input logic clk,
     always_ff @(posedge clk) begin : avalon_mm_tx
         wr_ctrl_rdy <= 1'b0;
         done_reading <= 1'b0;
-        if (!empty) begin
-            write <= 1'b1;
+        if (state == RUN && !empty) begin
+            write <= 1'b1; // might delay  to synchronize them with with fifo _d1 _d2 and then delay them as much as need
         end
         else begin
             write <= 1'b0;
         end
 
-        if (waitrequest) begin
-            writedata <= writedata;
-            rd_from_fifo <= 1'b0;
-        end
-        else begin
+        if (state == RUN && !waitrequest) begin
             writedata <= fifo_out;
             rd_from_fifo <= 1'b1;
+        end
+        else begin
+            writedata <= writedata;
+            rd_from_fifo <= 1'b0;
         end
 
         if (start_transfer) begin
@@ -114,10 +116,11 @@ module wr_ctrl(input logic clk,
         end
         else begin
             if (remaining_burst_count !== 0) begin // TODO: should I partition it into smaller bursts as in read?
-                remaining_burst_count <= remaining_burst_count - 16'b1;
+                if (!waitrequest) begin
+                    remaining_burst_count <= remaining_burst_count - 16'b1;
+                end
             end
             else begin
-                remaining_burst_count <= '0;
                 wr_ctrl_rdy <= 1'b1;
                 done_reading <= 1'b1;
             end
