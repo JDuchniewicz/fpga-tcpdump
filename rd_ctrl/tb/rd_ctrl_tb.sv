@@ -1,12 +1,14 @@
-
+`timescale 1ns/1ns
 module tb_top;
     logic clk = 1'b0;
     logic reset = 1'b0;
 
     always #10 clk = ~clk;
 
-    logic rd_ctrl, almost_full, rd_ctrl_rdy;
-    logic [31:0] control, pkt_begin, pkt_end, fifo_in;
+    logic rd_ctrl, almost_full, rd_ctrl_rdy, empty, rdreq, wr_to_fifo;
+    logic [31:0] control, pkt_begin, pkt_end, fifo_in, fifo_out;
+
+    logic [8:0] usedw; // unused
 
     logic [31:0] address;
     logic [31:0] readdata, dummy_data;
@@ -24,6 +26,7 @@ module tb_top;
                 .pkt_begin,
                 .pkt_end,
                 .fifo_in,
+                .wr_to_fifo,
                 .rd_ctrl_rdy,
                 .address,
                 .readdata,
@@ -31,6 +34,17 @@ module tb_top;
                 .waitrequest,
                 .read,
                 .burstcount);
+
+    fifo fifo_sim(.clock(clk),
+                  .data(fifo_in),
+                  .rdreq(rdreq),
+                  .sclr(~reset),
+                  .wrreq(wr_to_fifo),
+                  .empty(empty),
+                  .almost_full,
+                  .q(fifo_out),
+                  .usedw);
+
 
     initial begin
         rd_ctrl <= '0;

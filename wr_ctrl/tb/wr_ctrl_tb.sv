@@ -1,12 +1,14 @@
-
+`timescale 1ns/1ns
 module tb_top;
     logic clk = 1'b0;
     logic reset = 1'b0;
 
     always #10 clk = ~clk;
 
-    logic wr_ctrl, empty, wr_ctrl_rdy, waitrequest, rd_from_fifo;
-    logic [31:0] control, pkt_begin, pkt_end, write_address, fifo_out;
+    logic wr_ctrl, empty, wr_ctrl_rdy, waitrequest, rd_from_fifo, almost_full, wrreq;
+    logic [31:0] control, pkt_begin, pkt_end, write_address, fifo_out, fifo_in;
+
+    logic [8:0] usedw; // unused
 
     logic [31:0] address;
     logic [31:0] writedata, data_out;
@@ -33,9 +35,18 @@ module tb_top;
                 .burstcount,
                 .waitrequest);
 
+    fifo fifo_sim(.clock(clk),
+                  .data(fifo_in),
+                  .rdreq(rd_from_fifo),
+                  .sclr(~reset),
+                  .wrreq(wrreq),
+                  .empty(empty),
+                  .almost_full,
+                  .q(fifo_out),
+                  .usedw);
+
     initial begin
         wr_ctrl <= '0;
-        empty <= '0;
         waitrequest <= '0;
 
         control <= '0;
@@ -49,12 +60,24 @@ module tb_top;
         #20
         reset <= 1'b1;
 
-        // Initialize the component: 1 cycle delay between sending and
+        // pre-fill fifo with some data
+        $display("[WR_CTRL_prefill_fifo] T= %t filling fifo", $time);
+        for (int i = 0; i < pkt_end / 4; ++i) begin // TODO: if symbols and not words then probably reduce the widths on busses
+            wrreq <= 1'b1;
+            fifo_in <= i + 'd10;
+            #20;
+        end
+        wrreq <= 1'b0;
+        $display("[WR_CTRL_prefill_fifo] T= %t Done filling fifo", $time);
+
+        // Initialize the component: 6 cycles of delay for initialization
+        // after wr_ctrl
         // writing to FIFO
         wr_ctrl <= 1'b1;
 
+        #120 // wait for stabilization
+
         for(int i = 0; i < pkt_end / 4; ++i) begin
-            fifo_out <= i + 'd10;
             #20
             $display("[WR_CTRL_normal] T= %t fifo_out: %d, received: %d, burstcount: %d, write_address: %x", $time, fifo_out, data_out, burstcount, address);
         end
@@ -73,11 +96,20 @@ module tb_top;
         //reset <= 1'b0;
         //#20
         //reset <= 1'b1;
+        $display("[WR_CTRL_prefill_fifo_2] T= %t filling fifo", $time);
+        for (int i = 0; i < pkt_end / 4; ++i) begin
+            wrreq <= 1'b1;
+            fifo_in <= i + 'd10;
+            #20;
+        end
+        wrreq <= 1'b0;
+        $display("[WR_CTRL_prefill_fifo_2] T= %t Done filling fifo", $time);
 
+
+        /* Cannot simulate a stall with a real hw
         wr_ctrl <= 1'b1;
 
         for(j = 0; j < pkt_end / 8; ++j) begin
-            fifo_out <= j + 'd10;
             #20
             $display("[WR_CTRL_stall] T= %t fifo_out: %d, received: %d, empty: %d, write_address: %x", $time, fifo_out, data_out, empty, address);
         end
@@ -90,10 +122,7 @@ module tb_top;
         #20
         $display("[WR_CTRL_stall] T= %t fifo_out: %d, received: %d, empty: %d, write_address: %x", $time, fifo_out, data_out, empty, address);
 
-        empty <= 1'b0;
-
         for(int i = j; i < pkt_end / 4; ++i) begin
-            fifo_out <= i + 'd10;
             #20
             $display("[WR_CTRL_stall] T= %t fifo_out: %d, received: %d, empty: %d, write_address: %x", $time, fifo_out, data_out, empty, address);
         end
@@ -106,14 +135,17 @@ module tb_top;
 
         #20
         $display("[WR_CTRL_stall] T= %t after wr_ctrl=0 received: %d, write_address: %x", $time, data_out, address);
+        */
 
         #20
         // empty burst check
         pkt_end <= '0;
         wr_ctrl <= 1'b1;
 
+        #120 // wait for stabilization
+
+        // TODO: prefill?
         for(int i = 0; i < 4; ++i) begin
-            fifo_out <= i + 'd10;
             #20
             $display("[WR_CTRL_empty] T= %t fifo_out: %d, received: %d, write_address: %x", $time, fifo_out, data_out, address);
         end
@@ -126,16 +158,23 @@ module tb_top;
 
         #20
         $display("[WR_CTRL] T= %t after wr_ctrl=0 received: %d, write_address: %x", $time, data_out, address);
+        $display("[WR_CTRL_prefill_fifo_2] T= %t filling fifo", $time);
+        for (int i = 0; i < pkt_end / 4; ++i) begin
+            wrreq <= 1'b1;
+            fifo_in <= i + 'd10;
+            #20;
+        end
+        wrreq <= 1'b0;
+        $display("[WR_CTRL_prefill_fifo_2] T= %t Done filling fifo", $time);
 
         control <= '0;
         pkt_begin <= '0;
         pkt_end <= 'd32; // 8 words
         write_address <= 'h8000;
         wr_ctrl <= 1'b1;
-        #20
+        #120 // wait for stabilization
 
         for(int i = 0; i < pkt_end / 4; ++i) begin
-            fifo_out <= i + 'd10;
             waitrequest <= 1'b0;
             if (i == 2 || i == 5) begin
                 waitrequest <= 1'b1;

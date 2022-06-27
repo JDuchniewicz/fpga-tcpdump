@@ -42,9 +42,6 @@ module rd_ctrl(input logic clk,
         end
         else begin
             state <= state_next;
-            reg_control <= control;
-            reg_pkt_begin <= pkt_begin;
-            reg_pkt_end <= pkt_end;
         end
     end
 
@@ -80,10 +77,16 @@ module rd_ctrl(input logic clk,
         end
         else begin
             address <= address;
-        end
+            reg_control <= control;
+            reg_pkt_begin <= pkt_begin;
+            reg_pkt_end <= pkt_end;
+        end // TODO: remove?
 
         if (state == IDLE && state_next == RUN) begin
             start_transfer <= 1'b1;
+            reg_control <= control;
+            reg_pkt_begin <= pkt_begin;
+            reg_pkt_end <= pkt_end;
         end
         else begin
             start_transfer <= 1'b0;
