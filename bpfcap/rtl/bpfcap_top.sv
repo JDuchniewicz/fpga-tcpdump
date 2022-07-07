@@ -105,7 +105,7 @@ module bpfcap_top(input logic clk,
         end
         else begin
             new_request <= 1'b0;
-            if (avs_s0_address == 32'h3 && avs_s0_write) begin
+            if (avs_s0_address == 32'h3 && avs_s0_write && avs_s0_writedata !== '0) begin // upon a soft-reset of the system do not trigger new_request
                 new_request <= 1'b1;
             end
         end
