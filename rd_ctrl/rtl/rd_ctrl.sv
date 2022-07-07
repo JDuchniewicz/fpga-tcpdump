@@ -22,10 +22,15 @@ module rd_ctrl(input logic clk,
     logic [31:0] reg_control, reg_pkt_begin, reg_pkt_end;
     logic done_sending, start_transfer;
 
-    logic [15:0] total_burst_count, total_burst_remaining,
-                 burst_segment_remaining_count;
+    logic [15:0] total_burst_remaining,
+                 burst_segment_remaining_count,
+                 total_size;
 
-    assign total_burst_count = (reg_pkt_end - reg_pkt_begin);
+    logic [15:0] burst_size;
+    logic burst_start, burst_end;
+
+    assign total_size = (reg_pkt_end - reg_pkt_begin);
+
     // counter that counts number of words left to be read (decremented until
     // 0)
     // decrement the counter by burstcount until zero
@@ -72,15 +77,27 @@ module rd_ctrl(input logic clk,
     end
 
     always_ff @(posedge clk) begin : avalon_mm_ctrl
-        if (state_next === RUN && !almost_full && total_burst_remaining !== 0) begin
-            address <= reg_pkt_begin; // address should be incremented on every fragmented transaction
+        if (start_transfer) begin
+            address <= reg_pkt_begin;
         end
-        else begin
-            address <= address;
-            reg_control <= control;
-            reg_pkt_begin <= pkt_begin;
-            reg_pkt_end <= pkt_end;
-        end // TODO: remove?
+        else if (burst_end) begin
+            address <= address + burst_size * 'h4;
+        end
+
+        if (burst_start) begin
+            read <= 'h1;
+        end
+        else if (waitrequest == 'b0) begin
+            read <= 'h0;
+        end
+
+        if (burst_start) begin
+            burstcount <= burst_size;
+        end
+    end
+
+    always_ff @(posedge clk) begin : start_ctrl
+        start_transfer <= 1'b0;
 
         if (state == IDLE && state_next == RUN) begin
             start_transfer <= 1'b1;
@@ -88,62 +105,61 @@ module rd_ctrl(input logic clk,
             reg_pkt_begin <= pkt_begin;
             reg_pkt_end <= pkt_end;
         end
-        else begin
-            start_transfer <= 1'b0;
-        end
     end
 
-    always_ff @(posedge clk) begin : avalon_mm_tx
-        rd_ctrl_rdy <= 1'b0;
-        done_sending <= 1'b0;
-        if (state == RUN && !almost_full) begin
-            read <= 1'b1;
+    always_ff @(posedge clk) begin : burst_ctrl
+        if (start_transfer) begin
+            total_burst_remaining <= total_size; // TODO: temp variable name, change
         end
-        else begin
-            read <= 1'b0;
+        else if (burst_end) begin
+            total_burst_remaining <= total_burst_remaining - burst_size;
         end
 
-        if (state == RUN && readdatavalid) begin
-            wr_to_fifo <= 1'b1;
-            fifo_in <= readdata;
-        end
-        else begin
-            wr_to_fifo <= 1'b0;
-            fifo_in <= fifo_in;
+        if (waitrequest == 'b0) begin
+            burst_start <= 'b0;
         end
 
         if (start_transfer) begin
-            total_burst_remaining <= total_burst_count;
-            if (total_burst_count < 16) begin
-                burstcount <= total_burst_count;
-                burst_segment_remaining_count <= total_burst_count;
-            end
-            else begin
-                burstcount <= 16;
-                burst_segment_remaining_count <= 16;
+            burst_start <= 'b1;
+            burst_size <= total_size < 16 ? total_size : 16;
+        end
+
+        if (burst_end && total_burst_remaining > burst_size) begin
+            burst_start <= 'b1;
+            burst_size <= total_burst_remaining < 16 ? total_burst_remaining : 16;
+        end
+
+        if (burst_start) begin
+            burst_segment_remaining_count <= burst_size;
+        end
+        else if (readdatavalid) begin
+            if (burst_segment_remaining_count > 'h0) begin
+                burst_segment_remaining_count <= burst_segment_remaining_count -'h1;
             end
         end
-        else begin
-            if (burst_segment_remaining_count !== 0) begin
-                total_burst_remaining <= total_burst_remaining;
-                burst_segment_remaining_count <= burst_segment_remaining_count - 16'b1;
-            end
-            else begin
-                total_burst_remaining <= total_burst_remaining - burstcount;
-                if (total_burst_remaining - burstcount < 16 && total_burst_remaining !== 0) begin
-                    burstcount <= total_burst_remaining - burstcount;
-                    burst_segment_remaining_count <= total_burst_remaining - burstcount;
-                end
-                else begin
-                    burstcount <= 16;
-                    burst_segment_remaining_count <= 16;
-                end
-            end
 
-            if (total_burst_remaining === 0 && !done_sending && state == RUN) begin // just trigger it for one cycle
-                rd_ctrl_rdy <= 1'b1;
-                done_sending <= 1'b1;
-            end
+        burst_end <= 'b0;
+        if (burst_segment_remaining_count == 'h1) begin
+            burst_end <= 'b1;
+        end
+
+        rd_ctrl_rdy <= 1'b0;
+        done_sending <= 1'b0;
+
+        if (total_burst_remaining === 0 && !done_sending && state == RUN) begin // just trigger it for one cycle
+            rd_ctrl_rdy <= 1'b1;
+            done_sending <= 1'b1;
+        end
+    end
+
+    always_ff @(posedge clk) begin : fifo_ctrl
+        fifo_in <= readdata;
+
+        if (state == RUN && readdatavalid) begin
+            wr_to_fifo <= 1'b1;
+        end
+        else begin
+            wr_to_fifo <= 1'b0;
         end
     end
 endmodule
