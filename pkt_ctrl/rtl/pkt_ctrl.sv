@@ -8,12 +8,11 @@ module pkt_ctrl(input logic new_request,
                 output logic wr_ctrl,
                 output logic [1:0] state_out); // TODO: change
 
-    enum logic [2:0] { IDLE, RUN, RD_DONE, WR_DONE, DONE } state, state_next;
+    enum logic [1:0] { IDLE, RUN, RD_DONE, WR_DONE } state, state_next;
 
     always_ff @(posedge clk) begin : states
         if (!reset) begin
             state <= IDLE;
-            //state_next <= IDLE;
         end
         else begin
             state <= state_next;
@@ -28,7 +27,7 @@ module pkt_ctrl(input logic new_request,
                     state_out = IDLE;
                     end
 
-            RUN:    begin
+            RUN:    begin // TODO: can write in 1 line
                     rd_ctrl = 1'b1;
                     wr_ctrl = 1'b1;
                     state_out = RUN;
@@ -36,21 +35,16 @@ module pkt_ctrl(input logic new_request,
 
         RD_DONE:    begin
                     rd_ctrl = 1'b0;
-                    wr_ctrl = 1'b1;
+                    wr_ctrl = 1'b0;
                     state_out = RD_DONE;
                     end
 
         WR_DONE:    begin
-                    rd_ctrl = 1'b1;
+                    rd_ctrl = 1'b0;
                     wr_ctrl = 1'b0;
                     state_out = WR_DONE;
                     end
 
-           DONE:    begin
-                    rd_ctrl = 1'b0;
-                    wr_ctrl = 1'b0;
-                    state_out = DONE;
-                    end
         endcase
     end
 
@@ -66,14 +60,8 @@ module pkt_ctrl(input logic new_request,
                     end
 
             RUN:    begin
-                    if (rd_ctrl_rdy && !wr_ctrl_rdy) begin
+                    if (rd_ctrl_rdy) begin
                         state_next = RD_DONE;
-                    end
-                    else if (!rd_ctrl_rdy && wr_ctrl_rdy) begin
-                        state_next = WR_DONE;
-                    end
-                    else if (rd_ctrl_rdy && wr_ctrl_rdy) begin
-                        state_next = DONE;
                     end
                     else begin
                         state_next = RUN;
@@ -81,8 +69,8 @@ module pkt_ctrl(input logic new_request,
                     end
 
          RD_DONE:   begin
-                    if (rd_ctrl_rdy && wr_ctrl_rdy) begin
-                        state_next = DONE;
+                    if (wr_ctrl_rdy) begin
+                        state_next = WR_DONE;
                     end
                     else begin
                         state_next = RD_DONE;
@@ -90,17 +78,9 @@ module pkt_ctrl(input logic new_request,
                     end
 
          WR_DONE:   begin
-                    if (rd_ctrl_rdy && wr_ctrl_rdy) begin
-                        state_next = DONE;
-                    end
-                    else begin
-                        state_next = WR_DONE;
-                    end
-                    end
-
-            DONE:   begin
                         state_next = IDLE;
                     end
+
         endcase
     end
 

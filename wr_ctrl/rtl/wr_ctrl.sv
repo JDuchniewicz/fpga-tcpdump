@@ -17,6 +17,9 @@ module wr_ctrl(input logic clk,
                input logic waitrequest
            );
 
+           // ethernet packets are at least 64 bytes long
+           // but this holds true only for the first burst transaction
+           //
            // set address just once when sending burst and then increment the
            // address internally only and send new data on every clock cycle
            // if not received waitrequest
@@ -25,31 +28,24 @@ module wr_ctrl(input logic clk,
 
     enum logic [1:0] { IDLE, RUN, DONE } state, state_next;
 
-    logic [31:0] reg_control, reg_pkt_begin, reg_pkt_end, reg_write_address,
-                fifo_out_d1, fifo_out_d2;
-    logic done_reading, start_transfer, empty_d1, empty_d2, empty_d3; // it is asserted immediately
-    logic [15:0] remaining_burst_count;
-    logic [3:0] transfer_delay;
+    logic [31:0] reg_control, reg_pkt_begin, reg_pkt_end, reg_write_address;
+    logic done_reading, start_transfer;
 
-    assign burstcount = (reg_pkt_end - reg_pkt_begin);
-    assign address = reg_write_address;
+    logic [15:0] total_burst_remaining,
+                 burst_segment_remaining_count,
+                 total_size;
+
+    logic [15:0] burst_size;
+    logic burst_start, burst_end, write_d;
+
+    assign total_size = (reg_pkt_end - reg_pkt_begin);
 
     always_ff @(posedge clk) begin : states
         if (!reset) begin
             state <= IDLE;
-            fifo_out_d1 <= '0;
-            fifo_out_d2 <= '0;
-            empty_d1 <= '0;
-            empty_d2 <= '0;
-            empty_d3 <= '0;
         end
         else begin
             state <= state_next;
-            fifo_out_d1 <= fifo_out;
-            fifo_out_d2 <= fifo_out_d1;
-            empty_d1 <= empty;
-            empty_d2 <= empty_d1;
-            empty_d3 <= empty_d2;
         end
     end
 
@@ -80,6 +76,30 @@ module wr_ctrl(input logic clk,
     end
 
     always_ff @(posedge clk) begin : avalon_mm_ctrl
+        if (start_transfer) begin
+            address <= reg_write_address;
+        end
+        else if (burst_end) begin
+            address <= address + burst_size;
+        end
+
+        write_d <= write; // delay the write signal
+
+        if (burst_segment_remaining_count !== 'b0 && !empty) begin
+            write <= 'h1;
+        end
+        else begin
+            write <= 'h0;
+        end
+
+        if (burst_start) begin
+            burstcount <= burst_size;
+        end
+    end
+
+    always_ff @(posedge clk) begin : start_ctrl
+        start_transfer <= 1'b0;
+
         if (state == IDLE && state_next == RUN) begin
             start_transfer <= 1'b1;
             reg_control <= control;
@@ -87,51 +107,62 @@ module wr_ctrl(input logic clk,
             reg_pkt_end <= pkt_end;
             reg_write_address <= write_address;
         end
-        else begin
-            start_transfer <= 1'b0;
-        end
     end
 
     always_ff @(posedge clk) begin : avalon_mm_tx
-        wr_ctrl_rdy <= 1'b0;
-        done_reading <= 1'b0;
-        if (state == RUN && !empty_d3) begin //&& transfer_delay >= 4) begin
-            write <= 1'b1; // might delay  to synchronize them with with fifo _d1 _d2 and then delay them as much as need
+        if (start_transfer) begin
+            total_burst_remaining <= total_size; // TODO: temp variable name, change
         end
-        else begin
-            write <= 1'b0;
+        else if (burst_end) begin
+            total_burst_remaining <= total_burst_remaining - burst_size;
         end
 
-        if (state == RUN && !waitrequest && remaining_burst_count !== 0) begin // or state_next == RUN? (optimization)
-            writedata <= fifo_out;//fifo_out_d2; // 2 cycles of delay because fifo is first signalled and then it has a delay to output q
+        burst_start <= 'b0;
+
+        if (start_transfer) begin
+            burst_start <= 'b1;
+            burst_size <= total_size < 16 ? total_size : 16; // TODO: at least 64 bytes
+        end
+
+        if (burst_end && total_burst_remaining > burst_size) begin
+            burst_start <= 'b1;
+            burst_size <= total_burst_remaining < 16 ? total_burst_remaining : 16;
+        end
+
+        if (burst_start) begin
+            burst_segment_remaining_count <= burst_size;
+        end
+        else if (write_d) begin
+            if (burst_segment_remaining_count > 'h0) begin
+                burst_segment_remaining_count <= burst_segment_remaining_count -'h4;
+            end
+        end
+
+        burst_end <= 'b0;
+        if (burst_segment_remaining_count == 'h4) begin // last 4 symbols (word)
+            burst_end <= 'b1;
+        end
+
+        wr_ctrl_rdy <= 1'b0;
+        done_reading <= 1'b0;
+
+        if (!start_transfer && total_burst_remaining === 0 && !done_reading && state == RUN) begin // just trigger it for one cycle
+            wr_ctrl_rdy <= 1'b1;
+            done_reading <= 1'b1;
+        end
+    end
+
+    always_ff @(posedge clk) begin : fifo_ctrl
+        // TODO: add delay of 1 cycle
+        if (write_d) begin
+            writedata <= fifo_out;
+        end
+
+        if (state == RUN && !empty) begin // TODO: change conditions
             rd_from_fifo <= 1'b1;
         end
         else begin
-            writedata <= writedata;
             rd_from_fifo <= 1'b0;
         end
-
-        //if (state == RUN) begin // TODO: revert this if and try other logic, cause currently no data transfer is happening
-            if (state == RUN && start_transfer) begin
-                remaining_burst_count <= burstcount;
-                //transfer_delay <= 1;
-            end
-            else begin
-                //transfer_delay <= transfer_delay + 1;
-                //if (transfer_delay >= 4) begin
-                //    transfer_delay <= 4;
-                //end
-
-                if (remaining_burst_count !== 0) begin // TODO: should I partition it into smaller bursts as in read?
-                    if (!waitrequest) begin //&& transfer_delay >= 4) begin
-                        remaining_burst_count <= remaining_burst_count - 'h4;
-                    end
-                end
-                else if (state == RUN) begin
-                    wr_ctrl_rdy <= 1'b1; // TODO: probably triggering wrongly here, we have nothing in the module yet we signal rdy
-                    done_reading <= 1'b1;
-                end
-            end
-        //end
     end
 endmodule

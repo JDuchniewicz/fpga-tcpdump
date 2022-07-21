@@ -83,7 +83,7 @@ module rd_ctrl(input logic clk,
             address <= reg_pkt_begin;
         end
         else if (burst_end) begin
-            address <= address + burst_size * 'h4;
+            address <= address + burst_size;
         end
 
         if (burst_start) begin
@@ -117,13 +117,11 @@ module rd_ctrl(input logic clk,
             total_burst_remaining <= total_burst_remaining - burst_size;
         end
 
-        //if (burst_start == 1'b1) begin
-            burst_start <= 'b0;
-        //end
+        burst_start <= 'b0;
 
         if (start_transfer) begin
             burst_start <= 'b1;
-            burst_size <= total_size < 16 ? total_size : 16;
+            burst_size <= total_size < 16 ? total_size : 16; // TODO: at least 64 bytes
         end
 
         if (burst_end && total_burst_remaining > burst_size) begin
