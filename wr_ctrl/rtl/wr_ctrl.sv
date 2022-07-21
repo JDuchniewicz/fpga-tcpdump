@@ -36,9 +36,11 @@ module wr_ctrl(input logic clk,
                  total_size;
 
     logic [15:0] burst_size;
-    logic burst_start, burst_end, write_d;
+    logic burst_start, burst_end, write_d, write_no_d;
 
     assign total_size = (reg_pkt_end - reg_pkt_begin);
+    assign writedata = fifo_out;
+    assign write = write_d;
 
     always_ff @(posedge clk) begin : states
         if (!reset) begin
@@ -83,13 +85,13 @@ module wr_ctrl(input logic clk,
             address <= address + burst_size;
         end
 
-        write_d <= write; // delay the write signal
+        write_d <= write_no_d; // delay the write signal
 
         if (burst_segment_remaining_count !== 'b0 && !empty) begin
-            write <= 'h1;
+            write_no_d <= 'h1;
         end
         else begin
-            write <= 'h0;
+            write_no_d <= 'h0;
         end
 
         if (burst_start) begin
@@ -154,9 +156,9 @@ module wr_ctrl(input logic clk,
 
     always_ff @(posedge clk) begin : fifo_ctrl
         // TODO: add delay of 1 cycle
-        if (write_d) begin
-            writedata <= fifo_out;
-        end
+        //if (write_d) begin
+        //    writedata <= fifo_out;
+        //end
 
         if (state == RUN && !empty) begin // TODO: change conditions
             rd_from_fifo <= 1'b1;
