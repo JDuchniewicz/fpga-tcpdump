@@ -31,7 +31,7 @@ module wr_ctrl(input logic clk,
     logic [15:0] remaining_burst_count;
     logic [3:0] transfer_delay;
 
-    assign burstcount = (reg_pkt_end - reg_pkt_begin) / 4;
+    assign burstcount = (reg_pkt_end - reg_pkt_begin);
     assign address = reg_write_address;
 
     always_ff @(posedge clk) begin : states
@@ -95,7 +95,7 @@ module wr_ctrl(input logic clk,
     always_ff @(posedge clk) begin : avalon_mm_tx
         wr_ctrl_rdy <= 1'b0;
         done_reading <= 1'b0;
-        if (state == RUN && !empty_d3 && transfer_delay >= 4) begin
+        if (state == RUN && !empty_d3) begin //&& transfer_delay >= 4) begin
             write <= 1'b1; // might delay  to synchronize them with with fifo _d1 _d2 and then delay them as much as need
         end
         else begin
@@ -103,7 +103,7 @@ module wr_ctrl(input logic clk,
         end
 
         if (state == RUN && !waitrequest && remaining_burst_count !== 0) begin // or state_next == RUN? (optimization)
-            writedata <= fifo_out_d2; // 2 cycles of delay because fifo is first signalled and then it has a delay to output q
+            writedata <= fifo_out;//fifo_out_d2; // 2 cycles of delay because fifo is first signalled and then it has a delay to output q
             rd_from_fifo <= 1'b1;
         end
         else begin
@@ -111,25 +111,27 @@ module wr_ctrl(input logic clk,
             rd_from_fifo <= 1'b0;
         end
 
-        if (start_transfer) begin
-            remaining_burst_count <= burstcount;
-            transfer_delay <= 1;
-        end
-        else begin
-            transfer_delay <= transfer_delay + 1;
-            if (transfer_delay >= 4) begin
-                transfer_delay <= 4;
-            end
-
-            if (remaining_burst_count !== 0) begin // TODO: should I partition it into smaller bursts as in read?
-                if (!waitrequest && transfer_delay >= 4) begin
-                    remaining_burst_count <= remaining_burst_count - 16'b1;
-                end
+        //if (state == RUN) begin // TODO: revert this if and try other logic, cause currently no data transfer is happening
+            if (state == RUN && start_transfer) begin
+                remaining_burst_count <= burstcount;
+                //transfer_delay <= 1;
             end
             else begin
-                wr_ctrl_rdy <= 1'b1;
-                done_reading <= 1'b1;
+                //transfer_delay <= transfer_delay + 1;
+                //if (transfer_delay >= 4) begin
+                //    transfer_delay <= 4;
+                //end
+
+                if (remaining_burst_count !== 0) begin // TODO: should I partition it into smaller bursts as in read?
+                    if (!waitrequest) begin //&& transfer_delay >= 4) begin
+                        remaining_burst_count <= remaining_burst_count - 'h4;
+                    end
+                end
+                else if (state == RUN) begin
+                    wr_ctrl_rdy <= 1'b1; // TODO: probably triggering wrongly here, we have nothing in the module yet we signal rdy
+                    done_reading <= 1'b1;
+                end
             end
-        end
+        //end
     end
 endmodule

@@ -8,7 +8,7 @@ module pkt_ctrl(input logic new_request,
                 output logic wr_ctrl,
                 output logic [1:0] state_out); // TODO: change
 
-    enum logic [1:0] { IDLE, RUN, DONE } state, state_next;
+    enum logic [2:0] { IDLE, RUN, RD_DONE, WR_DONE, DONE } state, state_next;
 
     always_ff @(posedge clk) begin : states
         if (!reset) begin
@@ -34,6 +34,18 @@ module pkt_ctrl(input logic new_request,
                     state_out = RUN;
                     end
 
+        RD_DONE:    begin
+                    rd_ctrl = 1'b0;
+                    wr_ctrl = 1'b1;
+                    state_out = RD_DONE;
+                    end
+
+        WR_DONE:    begin
+                    rd_ctrl = 1'b1;
+                    wr_ctrl = 1'b0;
+                    state_out = WR_DONE;
+                    end
+
            DONE:    begin
                     rd_ctrl = 1'b0;
                     wr_ctrl = 1'b0;
@@ -45,7 +57,7 @@ module pkt_ctrl(input logic new_request,
     always_comb begin : fsm // TODO: had to remove clocking as otherwise it would oscillate between idle and run due to new_request being 1 then 0
         case (state)
             IDLE:   begin
-                    if (new_request) begin // TODO: is this proper? (will it react)?
+                    if (new_request) begin
                         state_next = RUN;
                     end
                     else begin
@@ -54,11 +66,35 @@ module pkt_ctrl(input logic new_request,
                     end
 
             RUN:    begin
-                    if (rd_ctrl_rdy && wr_ctrl_rdy) begin
+                    if (rd_ctrl_rdy && !wr_ctrl_rdy) begin
+                        state_next = RD_DONE;
+                    end
+                    else if (!rd_ctrl_rdy && wr_ctrl_rdy) begin
+                        state_next = WR_DONE;
+                    end
+                    else if (rd_ctrl_rdy && wr_ctrl_rdy) begin
                         state_next = DONE;
                     end
                     else begin
                         state_next = RUN;
+                    end
+                    end
+
+         RD_DONE:   begin
+                    if (rd_ctrl_rdy && wr_ctrl_rdy) begin
+                        state_next = DONE;
+                    end
+                    else begin
+                        state_next = RD_DONE;
+                    end
+                    end
+
+         WR_DONE:   begin
+                    if (rd_ctrl_rdy && wr_ctrl_rdy) begin
+                        state_next = DONE;
+                    end
+                    else begin
+                        state_next = WR_DONE;
                     end
                     end
 
