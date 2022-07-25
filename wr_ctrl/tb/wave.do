@@ -15,37 +15,42 @@ add wave -noupdate -expand -group top -radix hexadecimal /tb_top/fifo_out
 add wave -noupdate -expand -group top -radix hexadecimal /tb_top/address
 add wave -noupdate -expand -group top -radix hexadecimal /tb_top/writedata
 add wave -noupdate -expand -group top -radix hexadecimal /tb_top/burstcount
-add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/fifo_out
-add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/wr_ctrl_rdy
-add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/control
-add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/pkt_begin
-add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/pkt_end
-add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/write_address
-add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/address
-add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/burstcount
-add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/writedata
-add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/write
-add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/waitrequest
-add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/state
-add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/state_next
-add wave -noupdate -expand -group dut /tb_top/dut/tx_accept
-add wave -noupdate -expand -group dut /tb_top/dut/rd_from_fifo_d
-add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/rd_from_fifo
-add wave -noupdate -expand -group dut /tb_top/dut/skbf_valid
-add wave -noupdate -expand -group dut /tb_top/dut/skbf_ready
-add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/done_reading
-add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/start_transfer
-add wave -noupdate -expand -group dut /tb_top/dut/skbf_out
-add wave -noupdate -expand -group skbf -radix hexadecimal /tb_top/dut/skbf/i_clk
-add wave -noupdate -expand -group skbf -radix hexadecimal /tb_top/dut/skbf/i_reset
-add wave -noupdate -expand -group skbf -radix hexadecimal /tb_top/dut/skbf/i_valid
-add wave -noupdate -expand -group skbf -radix hexadecimal /tb_top/dut/skbf/o_ready
-add wave -noupdate -expand -group skbf -radix hexadecimal /tb_top/dut/skbf/i_data
-add wave -noupdate -expand -group skbf -radix hexadecimal /tb_top/dut/skbf/o_valid
-add wave -noupdate -expand -group skbf -radix hexadecimal /tb_top/dut/skbf/i_ready
-add wave -noupdate -expand -group skbf -radix hexadecimal /tb_top/dut/skbf/o_data
-add wave -noupdate -expand -group skbf -radix hexadecimal /tb_top/dut/skbf/w_data
-add wave -noupdate -expand -group skbf -radix hexadecimal /tb_top/dut/skbf/unused
+add wave -noupdate -expand -group skbf1 -radix hexadecimal /tb_top/dut/skbf1/i_clk
+add wave -noupdate -expand -group skbf1 -radix hexadecimal /tb_top/dut/skbf1/i_reset
+add wave -noupdate -expand -group skbf1 -radix hexadecimal /tb_top/dut/skbf1/i_valid
+add wave -noupdate -expand -group skbf1 -radix hexadecimal /tb_top/dut/skbf1/o_ready
+add wave -noupdate -expand -group skbf1 -radix hexadecimal /tb_top/dut/skbf1/i_data
+add wave -noupdate -expand -group skbf1 -radix hexadecimal /tb_top/dut/skbf1/o_valid
+add wave -noupdate -expand -group skbf1 -radix hexadecimal /tb_top/dut/skbf1/i_ready
+add wave -noupdate -expand -group skbf1 -radix hexadecimal /tb_top/dut/skbf1/o_data
+add wave -noupdate -expand -group skbf1 -radix hexadecimal /tb_top/dut/skbf1/w_data
+add wave -noupdate -expand -group skbf2 -radix hexadecimal /tb_top/dut/skbf2/i_clk
+add wave -noupdate -expand -group skbf2 -radix hexadecimal /tb_top/dut/skbf2/i_reset
+add wave -noupdate -expand -group skbf2 -radix hexadecimal /tb_top/dut/skbf2/i_valid
+add wave -noupdate -expand -group skbf2 -radix hexadecimal /tb_top/dut/skbf2/o_ready
+add wave -noupdate -expand -group skbf2 -radix hexadecimal /tb_top/dut/skbf2/i_data
+add wave -noupdate -expand -group skbf2 -radix hexadecimal /tb_top/dut/skbf2/o_valid
+add wave -noupdate -expand -group skbf2 -radix hexadecimal /tb_top/dut/skbf2/i_ready
+add wave -noupdate -expand -group skbf2 -radix hexadecimal /tb_top/dut/skbf2/o_data
+add wave -noupdate -expand -group skbf2 -radix hexadecimal /tb_top/dut/skbf2/w_data
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/fifo_out
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/wr_ctrl_rdy
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/control
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/pkt_begin
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/pkt_end
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/write_address
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/address
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/burstcount
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/writedata
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/write
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/waitrequest
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/state
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/state_next
+add wave -noupdate -group dut /tb_top/dut/tx_accept
+add wave -noupdate -group dut /tb_top/dut/rd_from_fifo_d
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/rd_from_fifo
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/done_reading
+add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/start_transfer
 add wave -noupdate -expand -group fifo -radix hexadecimal /tb_top/fifo_sim/clock
 add wave -noupdate -expand -group fifo -radix hexadecimal /tb_top/fifo_sim/data
 add wave -noupdate -expand -group fifo -radix hexadecimal /tb_top/fifo_sim/rdreq
@@ -72,4 +77,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {245 ns} {776 ns}
+WaveRestoreZoom {996 ns} {1527 ns}

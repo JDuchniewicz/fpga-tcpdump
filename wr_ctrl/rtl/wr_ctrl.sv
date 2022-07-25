@@ -37,30 +37,46 @@ module wr_ctrl(input logic clk,
 
     logic [15:0] burst_size;
     logic burst_start, burst_end, write_d, write_no_d;
-    logic skbf_valid, tx_accept, rd_from_fifo_d, skbf_ready;
-    logic [31:0] skbf_out;
+    logic skbf1_valid, skbf2_valid, tx_accept, rd_from_fifo_d, skbf1_ready, skbf2_ready;
+    logic [31:0] skbf1_out, skbf2_out;
 
     assign total_size = (reg_pkt_end - reg_pkt_begin);
-    assign writedata = skbf_out;
+    assign writedata = skbf2_out;
 
     assign tx_accept = write && !waitrequest;
-    assign write = skbf_valid;
+    assign write = skbf2_valid;
 
     skidbuffer #(
 		.DW(32),
         .OPT_INITIAL(0),
         .OPT_OUTREG(0)
 	)
-    skbf (
+    skbf1 (
 		.i_clk(clk),
         .i_reset(~reset),
+        // Left
 		.i_valid(rd_from_fifo_d),
-		.o_ready(skbf_ready),
+		.o_ready(skbf1_ready),
 		.i_data(fifo_out),
-		.o_valid(skbf_valid),
+        // Right
+		.o_valid(skbf1_valid),
+		.i_ready(skbf2_ready),
+		.o_data(skbf1_out)
+	),
+
+    skbf2 (
+		.i_clk(clk),
+        .i_reset(~reset),
+        // Left
+		.i_valid(skbf1_valid),
+		.o_ready(skbf2_ready),
+		.i_data(skbf1_out),
+        // Right
+		.o_valid(skbf2_valid),
 		.i_ready(tx_accept),
-		.o_data(skbf_out)
+		.o_data(skbf2_out)
 	);
+
 
     always_ff @(posedge clk) begin : states
         if (!reset) begin
@@ -183,7 +199,7 @@ module wr_ctrl(input logic clk,
         rd_from_fifo_d <= rd_from_fifo;
 
         if (burst_segment_remaining_count > 'h0 && !empty) begin // TODO: change conditions
-            rd_from_fifo <= skbf_ready;
+            rd_from_fifo <= skbf2_ready;
         end
         else begin
             rd_from_fifo <= 1'b0;
