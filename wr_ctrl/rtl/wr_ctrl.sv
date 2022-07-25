@@ -37,10 +37,30 @@ module wr_ctrl(input logic clk,
 
     logic [15:0] burst_size;
     logic burst_start, burst_end, write_d, write_no_d;
+    logic skbf_valid, tx_accept, rd_from_fifo_d, skbf_ready;
+    logic [31:0] skbf_out;
 
     assign total_size = (reg_pkt_end - reg_pkt_begin);
-    assign writedata = fifo_out;
-    assign write = write_d;
+    assign writedata = skbf_out;
+
+    assign tx_accept = write && !waitrequest;
+    assign write = skbf_valid;
+
+    skidbuffer #(
+		.DW(32),
+        .OPT_INITIAL(0),
+        .OPT_OUTREG(0)
+	)
+    skbf (
+		.i_clk(clk),
+        .i_reset(~reset),
+		.i_valid(rd_from_fifo_d),
+		.o_ready(skbf_ready),
+		.i_data(fifo_out),
+		.o_valid(skbf_valid),
+		.i_ready(tx_accept),
+		.o_data(skbf_out)
+	);
 
     always_ff @(posedge clk) begin : states
         if (!reset) begin
@@ -85,14 +105,14 @@ module wr_ctrl(input logic clk,
             address <= address + burst_size;
         end
 
-        write_d <= write_no_d; // delay the write signal
+        //write_d <= write_no_d; // delay the write signal
 
-        if (burst_segment_remaining_count !== 'b0 && !empty) begin
-            write_no_d <= 'h1;
-        end
-        else begin
-            write_no_d <= 'h0;
-        end
+        //if (burst_segment_remaining_count !== 'b0 && !empty) begin
+        //    write_no_d <= 'h1;
+        //end
+        //else begin
+        //    write_no_d <= 'h0;
+        //end
 
         if (burst_start) begin
             burstcount <= burst_size;
@@ -134,7 +154,8 @@ module wr_ctrl(input logic clk,
         if (burst_start) begin
             burst_segment_remaining_count <= burst_size;
         end
-        else if (write_d) begin
+        //else if (write_d) begin
+        else if (tx_accept) begin
             if (burst_segment_remaining_count > 'h0) begin
                 burst_segment_remaining_count <= burst_segment_remaining_count -'h4;
             end
@@ -159,9 +180,10 @@ module wr_ctrl(input logic clk,
         //if (write_d) begin
         //    writedata <= fifo_out;
         //end
+        rd_from_fifo_d <= rd_from_fifo;
 
-        if (state == RUN && !empty) begin // TODO: change conditions
-            rd_from_fifo <= 1'b1;
+        if (burst_segment_remaining_count > 'h0 && !empty) begin // TODO: change conditions
+            rd_from_fifo <= skbf_ready;
         end
         else begin
             rd_from_fifo <= 1'b0;

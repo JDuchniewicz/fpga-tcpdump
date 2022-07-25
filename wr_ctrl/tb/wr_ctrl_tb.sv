@@ -13,6 +13,7 @@ module tb_top;
     logic [31:0] address;
     logic [31:0] writedata, data_out;
     logic write;
+    logic waitrequest_d;
 
     logic [15:0] burstcount;
 
@@ -45,9 +46,10 @@ module tb_top;
                   .q(fifo_out),
                   .usedw);
 
+    assign waitrequest = waitrequest_d || !write;
+
     initial begin
         wr_ctrl <= '0;
-        waitrequest <= '0;
 
         control <= '0;
         pkt_begin <= '0;
@@ -62,7 +64,7 @@ module tb_top;
 
         // pre-fill fifo with some data
         $display("[WR_CTRL_prefill_fifo] T= %t filling fifo", $time);
-        for (int i = 0; i < pkt_end / 4; ++i) begin // TODO: if symbols and not words then probably reduce the widths on busses
+        for (int i = 0; i < pkt_end / 2; ++i) begin // TODO: if symbols and not words then probably reduce the widths on busses
             wrreq <= 1'b1;
             fifo_in <= i + 'd10;
             #20;
@@ -175,10 +177,10 @@ module tb_top;
         #120 // wait for stabilization
 
         for(int i = 0; i < pkt_end / 4; ++i) begin
-            waitrequest <= 1'b0;
-            if (i == 2 || i == 5) begin
-                waitrequest <= 1'b1;
-            end
+            //waitrequest <= 1'b0;
+            //if (i == 2 || i == 5) begin
+            //    waitrequest <= 1'b1;
+            //end
             #20
             $display("[WR_CTRL_waitrequest] T= %t fifo_out: %d, received: %d, burstcount: %d, write_address: %x, waitrequest: %x",
                         $time, fifo_out, data_out, burstcount, address, waitrequest);
@@ -196,6 +198,13 @@ module tb_top;
         #20
         $display("[WR_CTRL] T= %t Ending simulation...\n", $time);
         $exit;
+    end
+
+    always @(posedge clk) begin
+        waitrequest_d <= '1;
+        if (write) begin
+            waitrequest_d <= '0;
+        end
     end
 
     always @(negedge clk) begin

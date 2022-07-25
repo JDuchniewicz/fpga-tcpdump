@@ -1,4 +1,5 @@
 # RTL
+./rtl/skidbuffer.v
 ./rtl/wr_ctrl.sv
 ../fifo/rtl/fifo.v
 
