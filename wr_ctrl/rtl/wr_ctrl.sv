@@ -171,7 +171,7 @@ module wr_ctrl(input logic clk,
             burst_segment_remaining_count <= burst_size;
         end
         //else if (write_d) begin
-        else if (tx_accept) begin
+        else if (rd_from_fifo) begin
             if (burst_segment_remaining_count > 'h0) begin
                 burst_segment_remaining_count <= burst_segment_remaining_count -'h4;
             end
@@ -198,8 +198,12 @@ module wr_ctrl(input logic clk,
         //end
         rd_from_fifo_d <= rd_from_fifo;
 
-        if (burst_segment_remaining_count > 'h0 && !empty) begin // TODO: change conditions
-            rd_from_fifo <= skbf2_ready;
+        if (burst_segment_remaining_count > 'h4 && !empty) begin // TODO: change conditions
+            if (write && waitrequest) begin
+                rd_from_fifo <= 1'b0;
+            end else begin
+                rd_from_fifo <= 1'b1;
+            end
         end
         else begin
             rd_from_fifo <= 1'b0;

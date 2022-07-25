@@ -33,24 +33,28 @@ add wave -noupdate -expand -group skbf2 -radix hexadecimal /tb_top/dut/skbf2/o_v
 add wave -noupdate -expand -group skbf2 -radix hexadecimal /tb_top/dut/skbf2/i_ready
 add wave -noupdate -expand -group skbf2 -radix hexadecimal /tb_top/dut/skbf2/o_data
 add wave -noupdate -expand -group skbf2 -radix hexadecimal /tb_top/dut/skbf2/w_data
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/fifo_out
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/wr_ctrl_rdy
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/control
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/pkt_begin
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/pkt_end
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/write_address
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/address
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/burstcount
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/writedata
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/write
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/waitrequest
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/state
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/state_next
-add wave -noupdate -group dut /tb_top/dut/tx_accept
-add wave -noupdate -group dut /tb_top/dut/rd_from_fifo_d
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/rd_from_fifo
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/done_reading
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/start_transfer
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/fifo_out
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/wr_ctrl_rdy
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/control
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/pkt_begin
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/pkt_end
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/write_address
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/address
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/burstcount
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/total_burst_remaining
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/burst_segment_remaining_count
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/total_size
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/burst_size
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/writedata
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/write
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/waitrequest
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/state
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/state_next
+add wave -noupdate -expand -group dut /tb_top/dut/tx_accept
+add wave -noupdate -expand -group dut /tb_top/dut/rd_from_fifo_d
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/rd_from_fifo
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/done_reading
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/start_transfer
 add wave -noupdate -expand -group fifo -radix hexadecimal /tb_top/fifo_sim/clock
 add wave -noupdate -expand -group fifo -radix hexadecimal /tb_top/fifo_sim/data
 add wave -noupdate -expand -group fifo -radix hexadecimal /tb_top/fifo_sim/rdreq
@@ -61,7 +65,7 @@ add wave -noupdate -expand -group fifo -radix hexadecimal /tb_top/fifo_sim/empty
 add wave -noupdate -expand -group fifo -radix hexadecimal /tb_top/fifo_sim/q
 add wave -noupdate -expand -group fifo -radix hexadecimal /tb_top/fifo_sim/usedw
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {438 ns} 0}
+WaveRestoreCursors {{Cursor 1} {502 ns} 0}
 quietly wave cursor active 1
 configure wave -namecolwidth 150
 configure wave -valuecolwidth 100
@@ -77,4 +81,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {996 ns} {1527 ns}
+WaveRestoreZoom {354 ns} {629 ns}
