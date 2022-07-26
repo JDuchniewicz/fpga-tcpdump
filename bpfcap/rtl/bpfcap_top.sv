@@ -27,7 +27,7 @@ module bpfcap_top(input logic clk,
     logic [1:0] state;
     logic [31:0] out_control, out_pkt_begin, out_pkt_end, out_write_address;
 
-    logic [8:0] usedw; // unused
+    logic [8:0] usedw;
     logic empty, almost_full, rd_from_fifo, wr_to_fifo;
     logic [31:0] fifo_in, fifo_out;
 
@@ -83,6 +83,7 @@ module bpfcap_top(input logic clk,
                           .fifo_out,
                           .rd_from_fifo,
                           .wr_ctrl_rdy,
+                          .usedw,
                           .address(avs_m1_address),
                           .writedata(avs_m1_writedata),
                           .write(avs_m1_write),

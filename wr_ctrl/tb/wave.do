@@ -40,6 +40,8 @@ add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/pkt_begin
 add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/pkt_end
 add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/write_address
 add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/address
+add wave -noupdate -expand -group dut /tb_top/dut/first_burst
+add wave -noupdate -expand -group dut /tb_top/dut/first_burst_wait_fifo_fill
 add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/burstcount
 add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/total_burst_remaining
 add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/burst_segment_remaining_count
@@ -81,4 +83,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {354 ns} {629 ns}
+WaveRestoreZoom {244 ns} {1567 ns}

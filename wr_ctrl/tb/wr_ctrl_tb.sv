@@ -8,7 +8,7 @@ module tb_top;
     logic wr_ctrl, empty, wr_ctrl_rdy, waitrequest, rd_from_fifo, almost_full, wrreq;
     logic [31:0] control, pkt_begin, pkt_end, write_address, fifo_out, fifo_in;
 
-    logic [8:0] usedw; // unused
+    logic [8:0] usedw;
 
     logic [31:0] address;
     logic [31:0] writedata, data_out;
@@ -30,6 +30,7 @@ module tb_top;
                 .fifo_out,
                 .rd_from_fifo,
                 .wr_ctrl_rdy,
+                .usedw,
                 .address,
                 .writedata,
                 .write,

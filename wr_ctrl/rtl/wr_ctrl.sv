@@ -9,6 +9,7 @@ module wr_ctrl(input logic clk,
                input logic [31:0] pkt_begin,
                input logic [31:0] pkt_end,
                input logic [31:0] write_address,
+               input logic [8:0] usedw,
                // avalon (host)master signals
                output logic [31:0] address,
                output logic [31:0] writedata,
@@ -36,7 +37,7 @@ module wr_ctrl(input logic clk,
                  total_size;
 
     logic [15:0] burst_size;
-    logic burst_start, burst_end, write_d, write_no_d;
+    logic burst_start, burst_end, write_d, write_no_d, first_burst, first_burst_wait_fifo_fill;
     logic skbf1_valid, skbf2_valid, tx_accept, rd_from_fifo_d, skbf1_ready, skbf2_ready;
     logic [31:0] skbf1_out, skbf2_out;
 
@@ -44,7 +45,7 @@ module wr_ctrl(input logic clk,
     assign writedata = skbf2_out;
 
     assign tx_accept = write && !waitrequest;
-    assign write = skbf2_valid;
+    assign write = !first_burst ? skbf2_valid : 'b0;
 
     skidbuffer #(
 		.DW(32),
@@ -121,15 +122,6 @@ module wr_ctrl(input logic clk,
             address <= address + burst_size;
         end
 
-        //write_d <= write_no_d; // delay the write signal
-
-        //if (burst_segment_remaining_count !== 'b0 && !empty) begin
-        //    write_no_d <= 'h1;
-        //end
-        //else begin
-        //    write_no_d <= 'h0;
-        //end
-
         if (burst_start) begin
             burstcount <= burst_size;
         end
@@ -148,6 +140,13 @@ module wr_ctrl(input logic clk,
     end
 
     always_ff @(posedge clk) begin : avalon_mm_tx
+        if (!reset) begin
+            first_burst <= 'b1;
+            first_burst_wait_fifo_fill <= 'b0;
+            total_burst_remaining <= '0;
+            burst_segment_remaining_count <= '0;
+        end
+
         if (start_transfer) begin
             total_burst_remaining <= total_size; // TODO: temp variable name, change
         end
@@ -158,8 +157,19 @@ module wr_ctrl(input logic clk,
         burst_start <= 'b0;
 
         if (start_transfer) begin
-            burst_start <= 'b1;
-            burst_size <= total_size < 16 ? total_size : 16; // TODO: at least 64 bytes
+            if (first_burst) begin // TODO: BUG, this is not reliable condition, we should wait until we have at least 16 guys in the FIFO (what when start_transfer comes before the FIFO is filled enough).
+                first_burst_wait_fifo_fill <= 'b1;
+            end else begin
+                burst_start <= 'b1;
+                burst_size <= total_size < 16 ? total_size : 16; // TODO: at least 64 bytes
+            end
+        end
+
+        if (first_burst_wait_fifo_fill && usedw >= 16) begin
+                burst_start <= 'b1;
+                burst_size <= total_size < 16 ? total_size : 16; // TODO: at least 64 bytes
+                first_burst <= 'b0;
+                first_burst_wait_fifo_fill <= 'b0;
         end
 
         if (burst_end && total_burst_remaining > burst_size) begin
@@ -170,7 +180,6 @@ module wr_ctrl(input logic clk,
         if (burst_start) begin
             burst_segment_remaining_count <= burst_size;
         end
-        //else if (write_d) begin
         else if (rd_from_fifo) begin
             if (burst_segment_remaining_count > 'h0) begin
                 burst_segment_remaining_count <= burst_segment_remaining_count -'h4;
@@ -188,17 +197,14 @@ module wr_ctrl(input logic clk,
         if (!start_transfer && total_burst_remaining === 0 && !done_reading && state == RUN) begin // just trigger it for one cycle
             wr_ctrl_rdy <= 1'b1;
             done_reading <= 1'b1;
+            first_burst <= 'b1; // reset the "at-least 16 words in fifo" condition
         end
     end
 
     always_ff @(posedge clk) begin : fifo_ctrl
-        // TODO: add delay of 1 cycle
-        //if (write_d) begin
-        //    writedata <= fifo_out;
-        //end
         rd_from_fifo_d <= rd_from_fifo;
 
-        if (burst_segment_remaining_count > 'h4 && !empty) begin // TODO: change conditions
+        if (burst_segment_remaining_count > 'h4 && !empty && !first_burst) begin
             if (write && waitrequest) begin
                 rd_from_fifo <= 1'b0;
             end else begin
