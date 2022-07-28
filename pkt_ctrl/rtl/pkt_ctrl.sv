@@ -10,6 +10,8 @@ module pkt_ctrl(input logic new_request,
 
     enum logic [1:0] { IDLE, RUN, RD_DONE, WR_DONE } state, state_next;
 
+    assign state_out = state_next;
+
     always_ff @(posedge clk) begin : states
         if (!reset) begin
             state <= IDLE;
@@ -19,36 +21,9 @@ module pkt_ctrl(input logic new_request,
         end
     end
 
-    always_comb begin : control
-        case (state)
-            IDLE:   begin
-                    rd_ctrl = 1'b0;
-                    wr_ctrl = 1'b0;
-                    state_out = IDLE;
-                    end
-
-            RUN:    begin // TODO: can write in 1 line
-                    rd_ctrl = 1'b1;
-                    wr_ctrl = 1'b1;
-                    state_out = RUN;
-                    end
-
-        RD_DONE:    begin
-                    rd_ctrl = 1'b0;
-                    wr_ctrl = 1'b0;
-                    state_out = RD_DONE;
-                    end
-
-        WR_DONE:    begin
-                    rd_ctrl = 1'b0;
-                    wr_ctrl = 1'b0;
-                    state_out = WR_DONE;
-                    end
-
-        endcase
-    end
-
-    always_comb begin : fsm // TODO: had to remove clocking as otherwise it would oscillate between idle and run due to new_request being 1 then 0
+    always_comb begin : fsm
+        rd_ctrl = 1'b0;
+        wr_ctrl = 1'b0;
         case (state)
             IDLE:   begin
                     if (new_request) begin
@@ -60,6 +35,8 @@ module pkt_ctrl(input logic new_request,
                     end
 
             RUN:    begin
+                    rd_ctrl = 1'b1;
+                    wr_ctrl = 1'b1;
                     if (rd_ctrl_rdy) begin
                         state_next = RD_DONE;
                     end
