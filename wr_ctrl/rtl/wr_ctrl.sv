@@ -96,7 +96,7 @@ module wr_ctrl(input logic clk,
         end
     end
 
-    always_ff @(posedge clk) begin : fsm
+    always_comb begin : fsm
         case (state)
             IDLE:   begin
                     if (wr_ctrl) begin
