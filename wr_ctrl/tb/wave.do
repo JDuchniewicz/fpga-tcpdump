@@ -42,6 +42,8 @@ add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/write_addre
 add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/address
 add wave -noupdate -expand -group dut /tb_top/dut/first_burst
 add wave -noupdate -expand -group dut /tb_top/dut/first_burst_wait_fifo_fill
+add wave -noupdate -expand -group dut -radix decimal /tb_top/dut/timestamp_pkt_reg
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/timestamp_pkt_cnt
 add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/burstcount
 add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/total_burst_remaining
 add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/burst_segment_remaining_count
@@ -66,10 +68,16 @@ add wave -noupdate -expand -group fifo -radix hexadecimal /tb_top/fifo_sim/almos
 add wave -noupdate -expand -group fifo -radix hexadecimal /tb_top/fifo_sim/empty
 add wave -noupdate -expand -group fifo -radix hexadecimal /tb_top/fifo_sim/q
 add wave -noupdate -expand -group fifo -radix hexadecimal /tb_top/fifo_sim/usedw
+add wave -noupdate -expand -group ts -radix decimal /tb_top/ts/clk
+add wave -noupdate -expand -group ts -radix decimal /tb_top/ts/reset_n
+add wave -noupdate -expand -group ts -radix decimal /tb_top/ts/seconds
+add wave -noupdate -expand -group ts -radix decimal /tb_top/ts/nanoseconds
+add wave -noupdate -expand -group ts -radix decimal /tb_top/ts/counter
+add wave -noupdate -expand -group ts -radix decimal /tb_top/ts/increment
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {502 ns} 0}
+WaveRestoreCursors {{Cursor 1} {496 ns} 0}
 quietly wave cursor active 1
-configure wave -namecolwidth 150
+configure wave -namecolwidth 183
 configure wave -valuecolwidth 100
 configure wave -justifyvalue left
 configure wave -signalnamewidth 1
@@ -83,4 +91,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {244 ns} {1567 ns}
+WaveRestoreZoom {0 ns} {1542 ns}

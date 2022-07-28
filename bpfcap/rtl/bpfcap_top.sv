@@ -14,7 +14,7 @@ module bpfcap_top(input logic clk,
                   output logic avs_m0_read,
                   output logic [15:0] avs_m0_burstcount,
                   input logic avs_m0_readdatavalid,
-                  input logic avs_m0_waitrequest, // TODO: add support of these pins
+                  input logic avs_m0_waitrequest,
                   // second host (wr_ctrl)
                   output logic [31:0] avs_m1_address,
                   output logic [31:0] avs_m1_writedata,
@@ -25,7 +25,8 @@ module bpfcap_top(input logic clk,
 
     logic rd_ctrl_rdy, wr_ctrl_rdy, rd_ctrl, wr_ctrl, new_request;
     logic [1:0] state;
-    logic [31:0] out_control, out_pkt_begin, out_pkt_end, out_write_address;
+    logic [31:0] out_control, out_pkt_begin, out_pkt_end, out_write_address,
+                 seconds, nanoseconds;
 
     logic [8:0] usedw;
     logic empty, almost_full, rd_from_fifo, wr_to_fifo;
@@ -84,6 +85,8 @@ module bpfcap_top(input logic clk,
                           .rd_from_fifo,
                           .wr_ctrl_rdy,
                           .usedw,
+                          .seconds,
+                          .nanoseconds,
                           .address(avs_m1_address),
                           .writedata(avs_m1_writedata),
                           .write(avs_m1_write),
@@ -99,6 +102,13 @@ module bpfcap_top(input logic clk,
                  .almost_full(almost_full),
                  .q(fifo_out),
                  .usedw(usedw));
+
+    timestamp #(.FREQ(50)) ts
+                           (.clk,
+                            .reset_n(reset), // invert?
+                            .seconds,
+                            .nanoseconds);
+
 
     always_ff @(posedge clk) begin
         if (!reset) begin

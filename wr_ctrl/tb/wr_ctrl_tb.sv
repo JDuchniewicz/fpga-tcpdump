@@ -9,6 +9,7 @@ module tb_top;
     logic [31:0] control, pkt_begin, pkt_end, write_address, fifo_out, fifo_in;
 
     logic [8:0] usedw;
+    logic [31:0] seconds, nanoseconds;
 
     logic [31:0] address;
     logic [31:0] writedata, data_out;
@@ -31,6 +32,8 @@ module tb_top;
                 .rd_from_fifo,
                 .wr_ctrl_rdy,
                 .usedw,
+                .seconds,
+                .nanoseconds,
                 .address,
                 .writedata,
                 .write,
@@ -46,6 +49,11 @@ module tb_top;
                   .almost_full,
                   .q(fifo_out),
                   .usedw);
+
+    timestamp #(.FREQ(50)) ts(.clk,
+                              .reset_n(reset),
+                              .seconds,
+                              .nanoseconds);
 
     assign waitrequest = waitrequest_d || !write;
 

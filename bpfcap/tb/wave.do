@@ -30,37 +30,43 @@ add wave -noupdate -group mm_if /tb_top/mm_if/response
 add wave -noupdate -group mm_if /tb_top/mm_if/write
 add wave -noupdate -group mm_if /tb_top/mm_if/writedata
 add wave -noupdate -group mm_if /tb_top/mm_if/waitrequest
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/clk
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/reset
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/new_request
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/avs_s0_address
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/avs_s0_writedata
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/avs_s0_write
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/avs_s0_read
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/avs_s0_readdata
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/avs_m0_address
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/avs_m0_readdata
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/avs_m0_read
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/avs_m0_burstcount
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/avs_m1_address
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/avs_m1_writedata
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/avs_m1_write
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/avs_m1_burstcount
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/rd_ctrl_rdy
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/wr_ctrl_rdy
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/rd_ctrl
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/wr_ctrl
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/rd_from_fifo
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/wr_to_fifo
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/state
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/out_control
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/out_pkt_begin
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/out_pkt_end
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/usedw
-add wave -noupdate -group dut /tb_top/dut/empty
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/almost_full
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/fifo_in
-add wave -noupdate -group dut -radix hexadecimal /tb_top/dut/fifo_out
+add wave -noupdate -expand -group ts /tb_top/dut/ts/clk
+add wave -noupdate -expand -group ts /tb_top/dut/ts/reset_n
+add wave -noupdate -expand -group ts -radix decimal /tb_top/dut/ts/seconds
+add wave -noupdate -expand -group ts -radix decimal /tb_top/dut/ts/nanoseconds
+add wave -noupdate -expand -group ts -radix decimal /tb_top/dut/ts/counter
+add wave -noupdate -expand -group ts -radix decimal /tb_top/dut/ts/increment
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/clk
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/reset
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/new_request
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/avs_s0_address
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/avs_s0_writedata
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/avs_s0_write
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/avs_s0_read
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/avs_s0_readdata
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/avs_m0_address
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/avs_m0_readdata
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/avs_m0_read
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/avs_m0_burstcount
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/avs_m1_address
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/avs_m1_writedata
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/avs_m1_write
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/avs_m1_burstcount
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/rd_ctrl_rdy
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/wr_ctrl_rdy
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/rd_ctrl
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/wr_ctrl
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/rd_from_fifo
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/wr_to_fifo
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/state
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/out_control
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/out_pkt_begin
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/out_pkt_end
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/usedw
+add wave -noupdate -expand -group dut /tb_top/dut/empty
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/almost_full
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/fifo_in
+add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/fifo_out
 add wave -noupdate -group regs -radix hexadecimal /tb_top/dut/regs/clk
 add wave -noupdate -group regs -radix hexadecimal /tb_top/dut/regs/reset
 add wave -noupdate -group regs -radix hexadecimal /tb_top/dut/regs/address
@@ -104,13 +110,7 @@ add wave -noupdate -expand -group rd_ctrl -radix hexadecimal /tb_top/dut/read_co
 add wave -noupdate -expand -group rd_ctrl -radix hexadecimal /tb_top/dut/read_control/reg_control
 add wave -noupdate -expand -group rd_ctrl -radix hexadecimal /tb_top/dut/read_control/reg_pkt_begin
 add wave -noupdate -expand -group rd_ctrl -radix hexadecimal /tb_top/dut/read_control/reg_pkt_end
-add wave -noupdate -expand -group rd_ctrl -radix hexadecimal /tb_top/dut/read_control/addr_offset
-add wave -noupdate -expand -group rd_ctrl -radix hexadecimal /tb_top/dut/read_control/addr_offset_next
 add wave -noupdate -expand -group rd_ctrl -radix hexadecimal /tb_top/dut/read_control/done_sending
-add wave -noupdate -expand -group rd_ctrl -radix hexadecimal /tb_top/dut/read_control/done_sending_next
-add wave -noupdate -expand -group rd_ctrl -radix hexadecimal /tb_top/dut/read_control/packet_byte_count
-add wave -noupdate -expand -group rd_ctrl -radix hexadecimal /tb_top/dut/read_control/burst_index
-add wave -noupdate -expand -group rd_ctrl -radix hexadecimal /tb_top/dut/read_control/burst_index_next
 add wave -noupdate -expand -group wr_ctrl -radix hexadecimal /tb_top/dut/write_control/clk
 add wave -noupdate -expand -group wr_ctrl -radix hexadecimal /tb_top/dut/write_control/reset
 add wave -noupdate -expand -group wr_ctrl -radix hexadecimal /tb_top/dut/write_control/wr_ctrl
@@ -130,13 +130,7 @@ add wave -noupdate -expand -group wr_ctrl -radix hexadecimal /tb_top/dut/write_c
 add wave -noupdate -expand -group wr_ctrl -radix hexadecimal /tb_top/dut/write_control/reg_control
 add wave -noupdate -expand -group wr_ctrl -radix hexadecimal /tb_top/dut/write_control/reg_pkt_begin
 add wave -noupdate -expand -group wr_ctrl -radix hexadecimal /tb_top/dut/write_control/reg_pkt_end
-add wave -noupdate -expand -group wr_ctrl -radix hexadecimal /tb_top/dut/write_control/addr_offset
-add wave -noupdate -expand -group wr_ctrl -radix hexadecimal /tb_top/dut/write_control/addr_offset_next
 add wave -noupdate -expand -group wr_ctrl -radix hexadecimal /tb_top/dut/write_control/done_reading
-add wave -noupdate -expand -group wr_ctrl -radix hexadecimal /tb_top/dut/write_control/done_reading_next
-add wave -noupdate -expand -group wr_ctrl -radix hexadecimal /tb_top/dut/write_control/packet_byte_count
-add wave -noupdate -expand -group wr_ctrl -radix hexadecimal /tb_top/dut/write_control/burst_index
-add wave -noupdate -expand -group wr_ctrl -radix hexadecimal /tb_top/dut/write_control/burst_index_next
 add wave -noupdate -expand -group fifo -radix hexadecimal /tb_top/dut/fifo_i/clock
 add wave -noupdate -expand -group fifo -radix hexadecimal /tb_top/dut/fifo_i/data
 add wave -noupdate -expand -group fifo -radix hexadecimal /tb_top/dut/fifo_i/rdreq
@@ -163,4 +157,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {132 ns} {407 ns}
+WaveRestoreZoom {279 ns} {554 ns}
