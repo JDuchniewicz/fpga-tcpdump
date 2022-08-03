@@ -114,7 +114,7 @@ module rd_ctrl(input logic clk,
             total_burst_remaining <= total_size; // TODO: temp variable name, change
         end
         else if (burst_end) begin
-            total_burst_remaining <= total_burst_remaining - (total_burst_remaining < 16 ? total_burst_remaining : 16);
+            total_burst_remaining <= ((total_burst_remaining < 16) ? 0 : (total_burst_remaining - 16));
         end
 
         burst_start <= 'b0;
@@ -126,7 +126,7 @@ module rd_ctrl(input logic clk,
 
         if (burst_end && total_burst_remaining > '0) begin
             burst_start <= 'b1;
-            burst_size <= total_burst_remaining < 16 ? total_burst_remaining : 16;
+            burst_size <= total_burst_remaining < 16 ? (total_burst_remaining + 2) : 16;
         end
 
         if (burst_start) begin
@@ -135,7 +135,7 @@ module rd_ctrl(input logic clk,
         else if (readdatavalid) begin
             if (burst_segment_remaining_count > 'h0) begin
                 if (burst_segment_remaining_count < 'h4) begin
-                    burst_segment_remaining_count <= total_burst_remaining;
+                    burst_segment_remaining_count <= (total_burst_remaining + 2);
                 end
                 else begin
                     burst_segment_remaining_count <= burst_segment_remaining_count -'h4;
