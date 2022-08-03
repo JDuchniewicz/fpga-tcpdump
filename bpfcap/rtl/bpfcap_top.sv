@@ -25,6 +25,7 @@ module bpfcap_top(input logic clk,
 
     logic rd_ctrl_rdy, wr_ctrl_rdy, rd_ctrl, wr_ctrl, new_request;
     logic [1:0] state;
+    logic busy, done;
     logic [31:0] out_control, out_pkt_begin, out_pkt_end, out_write_address,
                  seconds, nanoseconds;
 
@@ -39,6 +40,8 @@ module bpfcap_top(input logic clk,
                                  .write(avs_s0_write),
                                  .readdata(avs_s0_readdata),
                                  .state,
+                                 .busy,
+                                 .done,
                                  .writedata(avs_s0_writedata),
                                  .out_control,
                                  .out_pkt_begin,
@@ -52,7 +55,9 @@ module bpfcap_top(input logic clk,
                              .wr_ctrl_rdy,
                              .rd_ctrl,
                              .wr_ctrl,
-                             .state_out(state)); // TODO: how do we want to store current state  of FSM (as bits in the register of course)
+                             .state_out(state),
+                             .busy,
+                             .done); // TODO: how do we want to store current state  of FSM (as bits in the register of course)
 
     // read ctrl reads packets from memory and puts them in FIFO
     rd_ctrl read_control (.clk,

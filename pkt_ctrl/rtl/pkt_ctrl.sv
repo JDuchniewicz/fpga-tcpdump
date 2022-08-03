@@ -6,7 +6,9 @@ module pkt_ctrl(input logic new_request,
                 input logic wr_ctrl_rdy,
                 output logic rd_ctrl,
                 output logic wr_ctrl,
-                output logic [1:0] state_out); // TODO: change
+                output logic [1:0] state_out,
+                output logic busy,
+                output logic done); // TODO: change
 
     enum logic [1:0] { IDLE, RUN, RD_DONE, WR_DONE } state, state_next;
 
@@ -24,8 +26,11 @@ module pkt_ctrl(input logic new_request,
     always_comb begin : fsm
         rd_ctrl = 1'b0;
         wr_ctrl = 1'b0;
+        busy = 1'b0;
+        done = 1'b0;
         case (state)
             IDLE:   begin
+                    done = 1'b1;
                     if (new_request) begin
                         state_next = RUN;
                     end
@@ -37,6 +42,7 @@ module pkt_ctrl(input logic new_request,
             RUN:    begin
                     rd_ctrl = 1'b1;
                     wr_ctrl = 1'b1;
+                    busy = 1'b1;
                     if (rd_ctrl_rdy) begin
                         state_next = RD_DONE;
                     end
@@ -46,6 +52,7 @@ module pkt_ctrl(input logic new_request,
                     end
 
          RD_DONE:   begin
+                    busy = 1'b1;
                     if (wr_ctrl_rdy) begin
                         state_next = WR_DONE;
                     end
@@ -55,7 +62,8 @@ module pkt_ctrl(input logic new_request,
                     end
 
          WR_DONE:   begin
-                        state_next = IDLE;
+                    done = 1'b1;
+                    state_next = IDLE;
                     end
 
         endcase

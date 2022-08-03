@@ -114,7 +114,7 @@ module rd_ctrl(input logic clk,
             total_burst_remaining <= total_size; // TODO: temp variable name, change
         end
         else if (burst_end) begin
-            total_burst_remaining <= total_burst_remaining - burst_size;
+            total_burst_remaining <= total_burst_remaining - (total_burst_remaining < 16 ? total_burst_remaining : 16);
         end
 
         burst_start <= 'b0;
@@ -124,7 +124,7 @@ module rd_ctrl(input logic clk,
             burst_size <= total_size < 16 ? total_size : 16; // TODO: at least 64 bytes
         end
 
-        if (burst_end && total_burst_remaining > burst_size) begin
+        if (burst_end && total_burst_remaining > '0) begin
             burst_start <= 'b1;
             burst_size <= total_burst_remaining < 16 ? total_burst_remaining : 16;
         end
@@ -134,19 +134,24 @@ module rd_ctrl(input logic clk,
         end
         else if (readdatavalid) begin
             if (burst_segment_remaining_count > 'h0) begin
-                burst_segment_remaining_count <= burst_segment_remaining_count -'h4;
+                if (burst_segment_remaining_count < 'h4) begin
+                    burst_segment_remaining_count <= total_burst_remaining;
+                end
+                else begin
+                    burst_segment_remaining_count <= burst_segment_remaining_count -'h4;
+                end
             end
         end
 
         burst_end <= 'b0;
-        if (burst_segment_remaining_count == 'h4) begin // last 4 symbols (word)
+        if (burst_segment_remaining_count <= 'h4 && burst_segment_remaining_count > 'h0) begin // last 4 symbols (word) or less
             burst_end <= 'b1;
         end
 
         rd_ctrl_rdy <= 1'b0;
         done_sending <= 1'b0;
 
-        if (!start_transfer && total_burst_remaining === 0 && !done_sending && state == RUN) begin // just trigger it for one cycle
+        if (!start_transfer && total_burst_remaining === 0  && burst_segment_remaining_count === 0 && burst_end && !done_sending && state == RUN) begin // just trigger it for one cycle
             rd_ctrl_rdy <= 1'b1;
             done_sending <= 1'b1;
         end

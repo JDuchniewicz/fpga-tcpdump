@@ -16,13 +16,15 @@ module register_bank
                 input logic write,
                 output logic [N-1:0] readdata,
                 input logic [1:0] state,
+                input logic busy,
+                input logic done,
                 input logic [N-1:0] writedata,
                 output logic [N-1:0] out_control,
                 output logic [N-1:0] out_pkt_begin,
                 output logic [N-1:0] out_pkt_end,
                 output logic [N-1:0] out_write_address);
 
-    logic [N-1:0] control, pkt_begin, pkt_end, write_address; // TODO: is this all? maybe more registers? pkt_end or end_add?
+    logic [N-1:0] control, pkt_begin, pkt_end, write_address;
 
     assign out_control = control;
     assign out_pkt_begin = pkt_begin;
@@ -37,7 +39,8 @@ module register_bank
             write_address <= '0;
         end
         else begin
-            control <= { control[N-1: 2], state }; // state is 2 LSB's
+            // control: MSB - BUSY, MSB-1 - DONE, ..., LSB+1, LSB - state
+            control <= { busy, done, control[N-3: 2], state }; // state is 2 LSB's
             pkt_begin <= pkt_begin;
             pkt_end <= pkt_end;
             write_address <= write_address;
