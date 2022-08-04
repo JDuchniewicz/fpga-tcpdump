@@ -44,6 +44,9 @@ module wr_ctrl(input logic clk,
     logic [31:0] skbf1_out, skbf2_out, timestamp_pkt_reg;
 
     logic [2:0] timestamp_pkt_cnt;
+    logic [1:0] word_alignment_remainder;
+
+    assign word_alignment_remainder = 4 - (total_burst_remaining % 4);
 
     assign total_size = (reg_pkt_end - reg_pkt_begin);
     assign writedata = timestamp_accept ? timestamp_pkt_reg : skbf2_out;
@@ -199,7 +202,7 @@ module wr_ctrl(input logic clk,
 
         if (burst_end && total_burst_remaining > '0) begin
             burst_start <= 'b1;
-            burst_size <= total_burst_remaining < 16 ? (total_burst_remaining + 2) : 16;
+            burst_size <= total_burst_remaining < 16 ? (total_burst_remaining + word_alignment_remainder) : 16;
         end
 
         if (burst_start) begin
@@ -208,7 +211,7 @@ module wr_ctrl(input logic clk,
         else if (rd_from_fifo || timestamp_accept) begin
             if (burst_segment_remaining_count > 'h0) begin
                 if (burst_segment_remaining_count < 'h4) begin
-                    burst_segment_remaining_count <= (total_burst_remaining + 2);
+                    burst_segment_remaining_count <= (total_burst_remaining + word_alignment_remainder);
                 end
                 else begin
                     burst_segment_remaining_count <= burst_segment_remaining_count -'h4;
