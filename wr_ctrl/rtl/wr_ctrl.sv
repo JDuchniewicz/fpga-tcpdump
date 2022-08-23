@@ -53,7 +53,7 @@ module wr_ctrl(input logic clk,
 
     assign tx_accept = write && !waitrequest;
     assign timestamp_accept = (timestamp_pkt_cnt > '0 && !waitrequest);
-    assign write = (timestamp_pkt_cnt > '0) ? 1'b1 : (!first_burst ? skbf2_valid : 'b0);
+    assign write = (timestamp_pkt_cnt > '0) ? 1'b1 : (!first_burst ? skbf2_valid : 'b0); // this sometimes fails for the first packet (it gets stuck in timestamp counting), due to waitrequest arriving too soon?
 
     assign timestamp_pkt_reg = (timestamp_pkt_cnt == 'd4) ? seconds :
                                ((timestamp_pkt_cnt == 'd3) ? nanoseconds : total_size);
@@ -174,7 +174,7 @@ module wr_ctrl(input logic clk,
             total_burst_remaining <= total_size + 'd16; // add fixed size of timestamping info
         end
         else if (burst_end) begin
-            total_burst_remaining <= ((total_burst_remaining < 16) ? 0 : (total_burst_remaining - 16));
+            total_burst_remaining <= total_burst_remaining - (total_burst_remaining < 16 ? total_burst_remaining : 16);
         end
 
         burst_start <= 'b0;
@@ -188,7 +188,7 @@ module wr_ctrl(input logic clk,
             end
         end
 
-        if (first_burst_wait_fifo_fill && usedw >= 16) begin
+        if (first_burst_wait_fifo_fill && usedw >= 16) begin // TODO: do we need usedw here?
                 burst_start <= 'b1;
                 burst_size <= total_size < 16 ? total_size : 16;
                 first_burst <= 'b0;
@@ -200,7 +200,7 @@ module wr_ctrl(input logic clk,
             timestamp_pkt_cnt <= timestamp_pkt_cnt - 'b1;
         end
 
-        if (burst_end && total_burst_remaining > '0) begin
+        if (burst_end && total_burst_remaining > 0) begin
             burst_start <= 'b1;
             burst_size <= total_burst_remaining < 16 ? (total_burst_remaining + word_alignment_remainder) : 16;
         end
@@ -241,8 +241,8 @@ module wr_ctrl(input logic clk,
 
         rd_from_fifo_d <= rd_from_fifo;
 
-        if (burst_segment_remaining_count > 'h4 && !empty && !first_burst && timestamp_pkt_cnt == '0) begin
-            if (write && waitrequest) begin
+        if (burst_segment_remaining_count >= 'h4 && !empty && !first_burst && timestamp_pkt_cnt == '0) begin
+            if (write && waitrequest || burst_segment_remaining_count <= 'h4) begin
                 rd_from_fifo <= 1'b0;
             end else begin
                 rd_from_fifo <= 1'b1;

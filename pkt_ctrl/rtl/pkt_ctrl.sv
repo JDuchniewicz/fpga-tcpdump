@@ -20,12 +20,17 @@ module pkt_ctrl(input logic new_request,
         end
         else begin
             state <= state_next;
+
+            rd_ctrl <= 1'b0;
+            wr_ctrl <= 1'b0;
+            if (state == IDLE && state_next == RUN) begin
+                rd_ctrl <= 1'b1;
+                wr_ctrl <= 1'b1;
+            end
         end
     end
 
     always_comb begin : fsm
-        rd_ctrl = 1'b0;
-        wr_ctrl = 1'b0;
         busy = 1'b0;
         done = 1'b0;
         case (state)
@@ -40,8 +45,6 @@ module pkt_ctrl(input logic new_request,
                     end
 
             RUN:    begin
-                    rd_ctrl = 1'b1;
-                    wr_ctrl = 1'b1;
                     busy = 1'b1;
                     if (rd_ctrl_rdy) begin
                         state_next = RD_DONE;
