@@ -41,6 +41,7 @@ add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/timestamp_p
 add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/state
 add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/state_next
 add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/tx_accept
+add wave -noupdate -expand -group dut -radix unsigned /tb_top/dut/tx_accept_counter
 add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/wr_ctrl_rdy
 add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/rd_from_fifo_d
 add wave -noupdate -expand -group int /tb_top/dut/int_address
@@ -82,7 +83,7 @@ add wave -noupdate -expand -group ts -radix decimal /tb_top/ts/nanoseconds
 add wave -noupdate -expand -group ts -radix decimal /tb_top/ts/counter
 add wave -noupdate -expand -group ts -radix decimal /tb_top/ts/increment
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {7024 ns} 0}
+WaveRestoreCursors {{Cursor 1} {6985 ns} 0}
 quietly wave cursor active 1
 configure wave -namecolwidth 183
 configure wave -valuecolwidth 187
@@ -98,4 +99,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {6817 ns} {7108 ns}
+WaveRestoreZoom {6856 ns} {7130 ns}

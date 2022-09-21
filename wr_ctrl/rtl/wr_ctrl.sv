@@ -41,7 +41,7 @@ module wr_ctrl(input logic clk,
     logic [15:0] burst_size;
     logic burst_start, burst_end, first_burst, first_burst_wait_fifo_fill, timestamp_accept;
     logic skbf1_valid, skbf2_valid, tx_accept, rd_from_fifo_d, skbf1_ready, skbf2_ready;
-    logic [31:0] timestamp_pkt_reg;
+    logic [31:0] timestamp_pkt_reg, timestamp_pkt_reg_d;
 
     logic [31:0] int_address, int_writedata;
     logic [15:0] int_burstcount;
@@ -52,27 +52,31 @@ module wr_ctrl(input logic clk,
     logic [2:0] timestamp_pkt_cnt;
     logic [1:0] word_alignment_remainder;
 
+    logic [2:0] tx_accept_counter; // remove one bit when debugged
+    // count tx_accept
+    // reset it at burst_end
+
     assign word_alignment_remainder = 4 - (total_burst_remaining % 4);
 
     assign total_size = (reg_pkt_end - reg_pkt_begin);
     // assign writedata = timestamp_accept ? timestamp_pkt_reg : skbf2_out_data[31:0];
 
-    //assign tx_accept = write && !waitrequest;
-    assign tx_accept = (waitrequest == '1) ? !write : write;
+    assign tx_accept = write && !waitrequest;
+    //assign tx_accept = (waitrequest == '1) ? !write : write;
     assign timestamp_accept = (timestamp_pkt_cnt > '0 && !waitrequest);
     // assign write = (timestamp_pkt_cnt > '0) ? 1'b1 : (!first_burst ? skbf2_valid : 'b0); // this sometimes fails for the first packet (it gets stuck in timestamp counting), due to waitrequest arriving too soon?
 
     assign timestamp_pkt_reg = (timestamp_pkt_cnt == 'd4) ? seconds :
                                ((timestamp_pkt_cnt == 'd3) ? nanoseconds : total_size);
 
-    assign skbf1_in_data = { int_write_d, int_address, int_burstcount, int_writedata};
+    assign skbf1_in_data[79:0] = { int_address, int_burstcount, int_writedata};
 
     //assign skbf1_data_valid = (state == WR_TIMESTAMP) ? int_write :
     //                            int_write_d;
     assign skbf1_data_valid = int_write_d;
 
     // Avalon MM interface signals
-    assign write = skbf2_out_data[80];
+    assign write = skbf2_valid;
     assign address = skbf2_out_data[79:48];
     assign burstcount = skbf2_out_data[47:32];
     assign writedata = skbf2_out_data[31:0];
@@ -104,7 +108,7 @@ module wr_ctrl(input logic clk,
 		.i_data(skbf2_in_data),
         // Right
 		.o_valid(skbf2_valid),
-		.i_ready(tx_accept),
+		.i_ready(!waitrequest),
 		.o_data(skbf2_out_data)
 	);
 
@@ -134,7 +138,7 @@ module wr_ctrl(input logic clk,
                     end
 
     WR_TIMESTAMP:   begin
-                    if (timestamp_pkt_cnt <= 1 && skbf1_ready) begin
+                    if (tx_accept_counter == 'd3) begin
                         state_next = WR_PKT_DATA;
                     end
                     else begin
@@ -177,15 +181,19 @@ module wr_ctrl(input logic clk,
         end
 
         if (state == WR_TIMESTAMP) begin
-            int_write <= 1'b1;
-            int_writedata <= timestamp_pkt_reg;
+            int_write <= '1;
+            int_writedata <= timestamp_pkt_reg_d;
         end
         else if (state == WR_PKT_DATA) begin
             int_write <= rd_from_fifo;
             int_writedata <= fifo_out;
+        end else begin
+            int_write <= 1'b0;
+            int_writedata <= fifo_out;
         end
 
         int_write_d <= int_write;
+        timestamp_pkt_reg_d <= timestamp_pkt_reg;
     end
 
     always_ff @(posedge clk) begin : start_ctrl
@@ -194,6 +202,7 @@ module wr_ctrl(input logic clk,
             reg_pkt_begin <= '0;
             reg_pkt_end <= '0;
             reg_write_address <= '0;
+            tx_accept_counter <= '0;
         end
 
         start_transfer <= 1'b0;
@@ -230,12 +239,12 @@ module wr_ctrl(input logic clk,
                 first_burst_wait_fifo_fill <= 'b1;
             //end else begin
                 burst_start <= 'b1;
-                burst_size <= total_size < 16 ? total_size : 16; // TODO: at least 64 bytes
+                burst_size <= 16; // first burst is a timestamp
             //end
                 timestamp_pkt_cnt <= 'd4; // seconds, nanoseconds, pkt_len x2
         end
 
-        if (first_burst_wait_fifo_fill && usedw >= 16) begin // TODO: do we need usedw here?
+        if (state == WR_PKT_DATA && first_burst_wait_fifo_fill && usedw >= 16) begin // TODO: do we need usedw here?
                 burst_start <= 'b1;
                 burst_size <= total_size < 16 ? total_size : 16;
                 first_burst <= 'b0;
@@ -244,7 +253,7 @@ module wr_ctrl(input logic clk,
         end
 
         //if (timestamp_accept) begin
-        if (skbf1_ready  && skbf1_data_valid && state == WR_TIMESTAMP) begin
+        if (skbf1_ready && state == WR_TIMESTAMP && timestamp_pkt_cnt != '0) begin
             timestamp_pkt_cnt <= timestamp_pkt_cnt - 'b1;
         end
 
@@ -302,7 +311,17 @@ module wr_ctrl(input logic clk,
         wr_ctrl_rdy <= 1'b0;
         done_reading <= 1'b0;
 
-        if (!start_transfer && total_burst_remaining === 0 && burst_segment_remaining_count === 0 && burst_end && !done_reading && state == WR_PKT_DATA) begin // just trigger it for one cycle
+        if (tx_accept && !burst_end && !burst_start) begin // guarantee is that won't transmit directly when burst_start
+            tx_accept_counter <= tx_accept_counter + 'd1;
+        end
+        // cannot reset at burst end because it tracks prepared and not sent
+        // bytes, need to do it here?
+
+        if (burst_end) begin
+            tx_accept_counter <= '0;
+        end
+
+        if (total_burst_remaining === 0 && burst_segment_remaining_count === 0 && burst_end && !done_reading && state == WR_PKT_DATA) begin // just trigger it for one cycle
             wr_ctrl_rdy <= 1'b1;
             done_reading <= 1'b1;
             first_burst <= 'b1; // reset the "at-least 16 words in fifo" condition
@@ -330,3 +349,4 @@ module wr_ctrl(input logic clk,
         end
     end
 endmodule
+
