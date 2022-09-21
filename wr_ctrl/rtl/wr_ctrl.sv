@@ -57,7 +57,8 @@ module wr_ctrl(input logic clk,
     assign total_size = (reg_pkt_end - reg_pkt_begin);
     // assign writedata = timestamp_accept ? timestamp_pkt_reg : skbf2_out_data[31:0];
 
-    assign tx_accept = write && !waitrequest;
+    //assign tx_accept = write && !waitrequest;
+    assign tx_accept = (waitrequest == '1) ? !write : write;
     assign timestamp_accept = (timestamp_pkt_cnt > '0 && !waitrequest);
     // assign write = (timestamp_pkt_cnt > '0) ? 1'b1 : (!first_burst ? skbf2_valid : 'b0); // this sometimes fails for the first packet (it gets stuck in timestamp counting), due to waitrequest arriving too soon?
 
