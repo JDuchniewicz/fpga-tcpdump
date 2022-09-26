@@ -45,11 +45,11 @@ add wave -noupdate -expand -group dut -radix unsigned /tb_top/dut/tx_accept_coun
 add wave -noupdate -expand -group dut /tb_top/dut/tx_allowed
 add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/wr_ctrl_rdy
 add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/rd_from_fifo_d
-add wave -noupdate -expand -group int /tb_top/dut/int_address
-add wave -noupdate -expand -group int /tb_top/dut/int_writedata
-add wave -noupdate -expand -group int /tb_top/dut/int_burstcount
-add wave -noupdate -expand -group int /tb_top/dut/int_write
-add wave -noupdate -expand -group int /tb_top/dut/int_write_d
+add wave -noupdate -expand -group int -radix hexadecimal /tb_top/dut/int_address
+add wave -noupdate -expand -group int -radix hexadecimal /tb_top/dut/int_writedata
+add wave -noupdate -expand -group int -radix hexadecimal /tb_top/dut/int_burstcount
+add wave -noupdate -expand -group int -radix hexadecimal /tb_top/dut/int_write
+add wave -noupdate -expand -group int -radix hexadecimal /tb_top/dut/int_write_d
 add wave -noupdate -expand -group skbf1 -radix hexadecimal /tb_top/dut/skbf1/i_clk
 add wave -noupdate -expand -group skbf1 -radix hexadecimal /tb_top/dut/skbf1/i_reset
 add wave -noupdate -expand -group skbf1 -radix hexadecimal /tb_top/dut/skbf1/i_valid
@@ -84,7 +84,7 @@ add wave -noupdate -expand -group ts -radix decimal /tb_top/ts/nanoseconds
 add wave -noupdate -expand -group ts -radix decimal /tb_top/ts/counter
 add wave -noupdate -expand -group ts -radix decimal /tb_top/ts/increment
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {7120 ns} 0}
+WaveRestoreCursors {{Cursor 1} {7082 ns} 0}
 quietly wave cursor active 1
 configure wave -namecolwidth 183
 configure wave -valuecolwidth 187
@@ -100,4 +100,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {6807 ns} {7294 ns}
+WaveRestoreZoom {6897 ns} {7352 ns}

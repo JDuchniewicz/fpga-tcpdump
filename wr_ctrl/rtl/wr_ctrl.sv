@@ -43,7 +43,7 @@ module wr_ctrl(input logic clk,
     logic skbf1_valid, skbf2_valid, tx_accept, rd_from_fifo_d, skbf1_ready, skbf2_ready, tx_allowed;
     logic [31:0] timestamp_pkt_reg, timestamp_pkt_reg_d;
 
-    logic [31:0] int_address, int_writedata;
+    logic [31:0] int_address, int_writedata, fifo_out_d;
     logic [15:0] int_burstcount;
     logic int_write, int_write_d;
     logic [80:0] skbf1_in_data, skbf2_in_data, skbf2_out_data;
@@ -74,8 +74,10 @@ module wr_ctrl(input logic clk,
     assign skbf1_in_data[80] = 1'b0;
 
     assign skbf1_data_valid = (state == WR_TIMESTAMP) ? timestamp_pkt_cnt !== '0 :
-                                int_write_d;
+                                int_write;
     //assign skbf1_data_valid = int_write_d;
+
+    assign int_writedata = skbf1_ready ? fifo_out : fifo_out_d;
 
     // Avalon MM interface signals
     assign write = skbf2_valid && tx_allowed && !burst_end;
@@ -169,7 +171,6 @@ module wr_ctrl(input logic clk,
             int_burstcount <= '0;
             int_write <= '0;
             int_write_d <= '0;
-            int_writedata <= '0;
         end
         else if (start_transfer) begin
             int_address <= reg_write_address;
@@ -194,14 +195,20 @@ module wr_ctrl(input logic clk,
         //end
         //else
         if (state == WR_PKT_DATA) begin
-            int_write <= rd_from_fifo;
+            if (rd_from_fifo) begin
+                int_write <= 'b1;
+            end
+            else if (skbf1_ready) begin
+                int_write <= 'b0;
+            end
             // int_writedata <= fifo_out;
         end else begin
             int_write <= 1'b0;
             // int_writedata <= fifo_out;
         end
 
-        int_writedata <= fifo_out;
+        //int_writedata <= fifo_out;
+        fifo_out_d <= fifo_out; // TODO: cleanup move to another proc
 
         int_write_d <= int_write;
         // timestamp_pkt_reg_d <= timestamp_pkt_reg;
@@ -269,7 +276,7 @@ module wr_ctrl(input logic clk,
             timestamp_pkt_cnt <= timestamp_pkt_cnt - 'b1;
         end
 
-        if (burst_end && total_burst_remaining > 0) begin
+        if (state == WR_PKT_DATA && burst_end && total_burst_remaining > 0) begin
             burst_start <= 'b1;
             burst_size <= total_burst_remaining < 16 ? (total_burst_remaining + word_alignment_remainder) : 16;
         end
@@ -346,6 +353,20 @@ module wr_ctrl(input logic clk,
         end
     end
 
+    always_comb begin : fifo_ctrl
+        rd_from_fifo <= '0;
+
+        if (state == WR_PKT_DATA) begin
+            if (burst_segment_remaining_count >= 'h4 && !empty && !first_burst) begin // TODO: maybe remove first_burst
+                if (!skbf1_ready || (skbf1_ready && burst_segment_remaining_count <= 'h4)) begin
+                    rd_from_fifo <= 1'b0;
+                end else begin
+                    rd_from_fifo <= 1'b1;
+                end
+            end
+        end
+    end
+    /*
     always_ff @(posedge clk) begin : fifo_ctrl
         if (!reset) begin
             rd_from_fifo <= '0;
@@ -356,7 +377,7 @@ module wr_ctrl(input logic clk,
         rd_from_fifo <= '0;
 
         if (state == WR_PKT_DATA) begin
-            if (burst_segment_remaining_count >= 'h4 && !empty && !first_burst && timestamp_pkt_cnt == '0) begin // TODO: maybe remove first_burst
+            if (burst_segment_remaining_count >= 'h4 && !empty && !first_burst) begin // TODO: maybe remove first_burst
                 //if (write && waitrequest || burst_segment_remaining_count <= 'h4) begin
                 if (!skbf1_ready || (skbf1_ready && burst_segment_remaining_count <= 'h4)) begin
                     rd_from_fifo <= 1'b0;
@@ -366,4 +387,5 @@ module wr_ctrl(input logic clk,
             end
         end
     end
+    */
 endmodule
