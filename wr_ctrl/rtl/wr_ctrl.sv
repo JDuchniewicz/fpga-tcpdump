@@ -69,12 +69,13 @@ module wr_ctrl(input logic clk,
     assign timestamp_pkt_reg = (timestamp_pkt_cnt == 'd4) ? seconds :
                                ((timestamp_pkt_cnt == 'd3) ? nanoseconds : total_size);
 
-    assign skbf1_in_data[79:0] = { int_address, int_burstcount, int_writedata};
+    assign skbf1_in_data[79:32] = { int_address, int_burstcount };
+    assign skbf1_in_data[31:0] = (state == WR_TIMESTAMP) ? timestamp_pkt_reg : int_writedata;
     assign skbf1_in_data[80] = 1'b0;
 
-    //assign skbf1_data_valid = (state == WR_TIMESTAMP) ? int_write :
-    //                            int_write_d;
-    assign skbf1_data_valid = int_write_d;
+    assign skbf1_data_valid = (state == WR_TIMESTAMP) ? timestamp_pkt_cnt !== '0 :
+                                int_write_d;
+    //assign skbf1_data_valid = int_write_d;
 
     // Avalon MM interface signals
     assign write = skbf2_valid && tx_allowed && !burst_end;
@@ -181,25 +182,29 @@ module wr_ctrl(input logic clk,
             int_burstcount <= burst_size;
         end
 
-        if (state == WR_TIMESTAMP) begin
-            if (tx_accept_counter == 'h0 || (tx_accept_counter <= 'h4 && tx_accept)) begin // TODO: might not be necessary
-                int_write <= '0;
-            end
-            else begin
-                int_write <= '1;
-            end
-            int_writedata <= timestamp_pkt_reg_d;
-        end
-        else if (state == WR_PKT_DATA) begin
+        //if (state == WR_TIMESTAMP) begin
+            // if (tx_accept_counter == 'h0 || (tx_accept_counter <= 'h4 && tx_accept)) begin // TODO: might not be necessary
+            //     int_write <= '0;
+            // end
+            // else begin
+            //     int_write <= '1;
+            // end
+            //int_write <= timestamp_pkt_cnt != 'h0;
+            // int_writedata <= timestamp_pkt_reg_d;
+        //end
+        //else
+        if (state == WR_PKT_DATA) begin
             int_write <= rd_from_fifo;
-            int_writedata <= fifo_out;
+            // int_writedata <= fifo_out;
         end else begin
             int_write <= 1'b0;
-            int_writedata <= fifo_out;
+            // int_writedata <= fifo_out;
         end
 
+        int_writedata <= fifo_out;
+
         int_write_d <= int_write;
-        timestamp_pkt_reg_d <= timestamp_pkt_reg;
+        // timestamp_pkt_reg_d <= timestamp_pkt_reg;
     end
 
     always_ff @(posedge clk) begin : start_ctrl
@@ -260,7 +265,7 @@ module wr_ctrl(input logic clk,
         end
 
         //if (timestamp_accept) begin
-        if (skbf1_ready && state == WR_TIMESTAMP && timestamp_pkt_cnt != '0) begin
+        if (skbf1_ready && skbf1_data_valid && state == WR_TIMESTAMP && timestamp_pkt_cnt != '0) begin
             timestamp_pkt_cnt <= timestamp_pkt_cnt - 'b1;
         end
 
@@ -346,7 +351,7 @@ module wr_ctrl(input logic clk,
             rd_from_fifo <= '0;
         end
 
-        rd_from_fifo_d <= rd_from_fifo; // TODO: to remove
+        // rd_from_fifo_d <= rd_from_fifo; // TODO: to remove
 
         rd_from_fifo <= '0;
 
@@ -362,4 +367,3 @@ module wr_ctrl(input logic clk,
         end
     end
 endmodule
-
