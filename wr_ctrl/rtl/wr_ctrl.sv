@@ -357,8 +357,8 @@ module wr_ctrl(input logic clk,
         rd_from_fifo <= '0;
 
         if (state == WR_PKT_DATA) begin
-            if (burst_segment_remaining_count >= 'h4 && !empty && !first_burst) begin // TODO: maybe remove first_burst
-                if (!skbf1_ready || (skbf1_ready && burst_segment_remaining_count <= 'h4)) begin
+            if (burst_segment_remaining_count > '0 && !empty && !first_burst) begin // TODO: maybe remove first_burst
+                if (!skbf1_ready) begin//|| (skbf1_ready && burst_segment_remaining_count <= 'h4)) begin
                     rd_from_fifo <= 1'b0;
                 end else begin
                     rd_from_fifo <= 1'b1;
