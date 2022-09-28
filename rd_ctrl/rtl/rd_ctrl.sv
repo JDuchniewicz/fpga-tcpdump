@@ -113,22 +113,22 @@ module rd_ctrl(input logic clk,
 
     always_ff @(posedge clk) begin : burst_ctrl
         if (start_transfer) begin
-            total_burst_remaining <= total_size; // TODO: temp variable name, change
+            total_burst_remaining <= (total_size < 'd16) ? '0 : (total_size - 'd16); // TODO: temp variable name, change
         end
         else if (burst_end) begin
-            total_burst_remaining <= ((total_burst_remaining < 16) ? 0 : (total_burst_remaining - 16));
+            total_burst_remaining <= ((total_burst_remaining < 'd16) ? '0 : (total_burst_remaining - 'd16));
         end
 
         burst_start <= 'b0;
 
         if (start_transfer) begin
             burst_start <= 'b1;
-            burst_size <= total_size < 16 ? total_size : 16; // TODO: at least 64 bytes
+            burst_size <= total_size < 'd16 ? total_size : 'd16; // TODO: at least 64 bytes
         end
 
         if (burst_end && total_burst_remaining > '0) begin
             burst_start <= 'b1;
-            burst_size <= total_burst_remaining < 16 ? (total_burst_remaining + word_alignment_remainder) : 16;
+            burst_size <= total_burst_remaining < 'd16 ? (total_burst_remaining + word_alignment_remainder) : 'd16;
         end
 
         if (burst_start) begin

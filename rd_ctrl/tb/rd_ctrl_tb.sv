@@ -54,7 +54,7 @@ module tb_top;
 
         control <= '0;
         pkt_begin <= '0;
-        pkt_end <= 'd66; // 8 words 32 bytes
+        pkt_end <= 'h100; // 8 words 32 bytes
         waitrequest <= 1'b0;
 
         reset <= 1'b0;

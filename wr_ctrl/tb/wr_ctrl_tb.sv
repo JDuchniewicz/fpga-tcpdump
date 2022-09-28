@@ -62,7 +62,7 @@ module tb_top;
 
         control <= '0;
         pkt_begin <= '0;
-        pkt_end <= 'h156;
+        pkt_end <= 'h100;
         write_address <= 'h8000;
 
         data_out <= '0;

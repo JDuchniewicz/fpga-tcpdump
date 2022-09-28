@@ -211,10 +211,10 @@ module wr_ctrl(input logic clk,
         end
 
         if (start_transfer) begin
-            total_burst_remaining <= total_size + 'd16; // add fixed size of timestamping info
+            total_burst_remaining <= (total_size < 'd16) ? 'd16 : (total_size - 'd16 + 'd16); // add fixed size of timestamping info
         end
         else if (burst_end) begin
-            total_burst_remaining <= total_burst_remaining - (total_burst_remaining < 16 ? total_burst_remaining : 16);
+            total_burst_remaining <= total_burst_remaining - (total_burst_remaining < 'd16 ? total_burst_remaining : 'd16);
             tx_allowed <= '0;
         end
 
@@ -223,13 +223,13 @@ module wr_ctrl(input logic clk,
         if (start_transfer) begin
             first_burst_wait_fifo_fill <= 'b1;
             burst_start <= 'b1;
-            burst_size <= 16; // first burst is a timestamp
+            burst_size <= 'd16; // first burst is a timestamp
             timestamp_pkt_cnt <= 'd4; // seconds, nanoseconds, pkt_len x2
         end
 
         if (state == WR_PKT_DATA && first_burst_wait_fifo_fill && usedw >= 16) begin // TODO: do we need usedw here?
             burst_start <= 'b1;
-            burst_size <= total_size < 16 ? total_size : 16;
+            burst_size <= total_size < 'd16 ? total_size : 16;
             first_burst_wait_fifo_fill <= 'b0;
         end
 
@@ -239,7 +239,7 @@ module wr_ctrl(input logic clk,
 
         if (state == WR_PKT_DATA && burst_end && total_burst_remaining > 0) begin
             burst_start <= 'b1;
-            burst_size <= total_burst_remaining < 16 ? (total_burst_remaining + word_alignment_remainder) : 16;
+            burst_size <= total_burst_remaining < 'd16 ? (total_burst_remaining + word_alignment_remainder) : 'd16;
         end
 
         if (state == WR_TIMESTAMP) begin
