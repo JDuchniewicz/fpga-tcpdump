@@ -31,7 +31,7 @@ module wr_ctrl(input logic clk,
 
     logic [15:0] burst_size;
     logic burst_start, burst_end, first_burst_wait_fifo_fill, timestamp_accept;
-    logic skbf1_valid, skbf2_valid, tx_accept, skbf1_ready, skbf2_ready, tx_allowed;
+    logic skbf1_valid, skbf2_valid, tx_accept, skbf1_ready, skbf2_ready;
     logic [31:0] timestamp_pkt_reg;
 
     logic [31:0] int_address, int_writedata, fifo_out_d;
@@ -63,10 +63,12 @@ module wr_ctrl(input logic clk,
     assign int_writedata = skbf1_ready ? fifo_out : fifo_out_d;
 
     // Avalon MM interface signals
-    assign write = skbf2_valid && tx_allowed && !burst_end;
+    assign write = skbf2_valid;
     assign address = skbf2_out_data[79:48];
-    assign burstcount = (skbf2_out_data[47:32] < 'b1) ? 'b1 : ((skbf2_out_data[47:32] + 'd4 - 'd1) / 'd4);
+    assign burstcount = skbf2_out_data[47:32];
     assign writedata = skbf2_out_data[31:0];
+
+    assign wr_ctrl_rdy = done_reading;
 
     skidbuffer #(
 		.DW(80),
@@ -153,33 +155,33 @@ module wr_ctrl(input logic clk,
             int_address <= '0;
             int_burstcount <= '0;
             int_write <= '0;
-            int_write_d <= '0;
         end
-        else if (start_transfer) begin
-            int_address <= reg_write_address;
-        end
-        else if (burst_end) begin
-            int_address <= address + burst_size;
-        end
-
-        if (burst_start) begin
-            int_burstcount <= burst_size;
-        end
-
-        if (state == WR_PKT_DATA) begin
-            if (rd_from_fifo) begin
-                int_write <= 'b1;
+        else begin
+            if (start_transfer) begin
+                int_address <= reg_write_address;
             end
-            else if (skbf1_ready) begin
+            else if (burst_end) begin
+                int_address <= address + burst_size;
+            end
+
+            if (start_transfer) begin
+                int_burstcount <= 'h4; // timestamp
+            end
+            else if (burst_start) begin
+                int_burstcount <= burst_size[15:2] + (burst_size[1:0] !== 'h0); // $ceil(burst_size/4.0)
+            end
+
+            if (state == WR_PKT_DATA) begin
+                if (rd_from_fifo) begin // arm int_write if there was a FIFO read in previous CC (data to be sent)
+                    int_write <= 'b1;
+                end
+                else if (skbf1_ready) begin // clear int_write if the last word has been accepted by skbf1 (rd_from_fifo is already down)
+                    int_write <= 'b0;
+                end
+            end else begin
                 int_write <= 'b0;
             end
-        end else begin
-            int_write <= 'b0;
         end
-
-        fifo_out_d <= fifo_out; // TODO: cleanup move to another proc
-
-        int_write_d <= int_write;
     end
 
     always_ff @(posedge clk) begin : start_ctrl
@@ -209,45 +211,59 @@ module wr_ctrl(input logic clk,
             timestamp_pkt_cnt <= '0;
             tx_accept_counter <= '0;
         end
+        else begin
+            /*******************************************************/
+            /* Set the total burst length at the start of a packet */
+            /*******************************************************/
+            if (start_transfer) begin
+                // total_burst_remaining <= (total_size < 'd16) ? 'd16 : (total_size - 'd16 + 'd16); // add fixed size of timestamping info
+                total_burst_remaining <= total_size + 'd16; // the line above sounds weird, should be like this; if you have an issue with an extra burst, than it's not a fine resolution
+                first_burst_wait_fifo_fill <= 'b1;
+                timestamp_pkt_cnt <= 'd4; // seconds, nanoseconds, pkt_len x2
+            end
+            else if (burst_end) begin
+                total_burst_remaining <= total_burst_remaining - (total_burst_remaining < 'd16 ? total_burst_remaining : 'd16);
+            end
 
-        if (start_transfer) begin
-            total_burst_remaining <= (total_size < 'd16) ? 'd16 : (total_size - 'd16 + 'd16); // add fixed size of timestamping info
-        end
-        else if (burst_end) begin
-            total_burst_remaining <= total_burst_remaining - (total_burst_remaining < 'd16 ? total_burst_remaining : 'd16);
-            tx_allowed <= '0;
-        end
+            /*****************************/
+            /* Mark the start of a burst */
+            /*****************************/
+            burst_start <= 'b0;
 
-        burst_start <= 'b0;
+            if (start_transfer) begin
+                burst_start <= 'b1;
+                burst_size <= 'd16; // first burst is a timestamp
+            end
 
-        if (start_transfer) begin
-            first_burst_wait_fifo_fill <= 'b1;
-            burst_start <= 'b1;
-            burst_size <= 'd16; // first burst is a timestamp
-            timestamp_pkt_cnt <= 'd4; // seconds, nanoseconds, pkt_len x2
-        end
+            if (state == WR_PKT_DATA && (first_burst_wait_fifo_fill && usedw >= 'd4) || (burst_end && total_burst_remaining > 0)) begin
+                burst_start <= 'b1;
+                burst_size <= total_burst_remaining < 'd16 ? (total_burst_remaining + word_alignment_remainder) : 'd16;
+                first_burst_wait_fifo_fill <= 'b0;
+            end
 
-        if (state == WR_PKT_DATA && first_burst_wait_fifo_fill && usedw >= 16) begin // TODO: do we need usedw here?
-            burst_start <= 'b1;
-            burst_size <= total_size < 'd16 ? total_size : 16;
-            first_burst_wait_fifo_fill <= 'b0;
-        end
+            /***************************/
+            /* Mark the end of a burst */
+            /***************************/
+            burst_end <= 'b0;
 
-        if (skbf1_ready && skbf1_data_valid && state == WR_TIMESTAMP && timestamp_pkt_cnt != '0) begin
-            timestamp_pkt_cnt <= timestamp_pkt_cnt - 'b1;
-        end
+            if (tx_accept_counter <= 'h4 && tx_accept_counter > 'h0 && tx_accept) begin
+                burst_end <= 'b1;
+            end
 
-        if (state == WR_PKT_DATA && burst_end && total_burst_remaining > 0) begin
-            burst_start <= 'b1;
-            burst_size <= total_burst_remaining < 'd16 ? (total_burst_remaining + word_alignment_remainder) : 'd16;
-        end
+            /************************************************************/
+            /* Count the number of timestamp words put into write stage */
+            /************************************************************/
+            if (state == WR_TIMESTAMP && skbf1_ready && skbf1_data_valid && timestamp_pkt_cnt != '0) begin
+                timestamp_pkt_cnt <= timestamp_pkt_cnt - 'b1;
+            end
 
-        if (state == WR_TIMESTAMP) begin
+            /************************************************************************************/
+            /* Control the number of packet bytes put into write stage within the current burst */
+            /************************************************************************************/
             if (burst_start) begin
                 burst_segment_remaining_count <= burst_size;
-                tx_allowed <= 'b1;
             end
-            else if (skbf1_ready) begin
+            else if ((state == WR_TIMESTAMP && skbf1_ready) || (state == WR_PKT_DATA && rd_from_fifo)) begin
                 if (burst_segment_remaining_count > 'h0) begin
                     if (burst_segment_remaining_count < 'h4) begin
                         burst_segment_remaining_count <= (total_burst_remaining + word_alignment_remainder);
@@ -257,47 +273,36 @@ module wr_ctrl(input logic clk,
                     end
                 end
             end
-        end
-        else if (state == WR_PKT_DATA) begin
+
+            /********************************************************************/
+            /* Control the number of transmitted bytes within the current burst */
+            /********************************************************************/
             if (burst_start) begin
-                burst_segment_remaining_count <= burst_size;
-                tx_allowed <= 'b1;
+                tx_accept_counter <= burst_size;
             end
-            else if (rd_from_fifo) begin
-                if (burst_segment_remaining_count > 'h0) begin
-                    if (burst_segment_remaining_count < 'h4) begin
-                        burst_segment_remaining_count <= (total_burst_remaining + word_alignment_remainder);
-                    end
-                    else begin
-                        burst_segment_remaining_count <= burst_segment_remaining_count -'h4;
-                    end
+            else if (tx_accept && tx_accept_counter > '0) begin
+                if (tx_accept_counter < 'h4) begin
+                    tx_accept_counter <= (total_burst_remaining + word_alignment_remainder);
+                end
+                else begin
+                    tx_accept_counter <= tx_accept_counter -'h4;
                 end
             end
-        end
 
-        burst_end <= 'b0;
-        if (tx_accept_counter <= 'h4 && tx_accept_counter > 'h0 && tx_accept) begin
-            burst_end <= 'b1;
-        end
+            /****************************/
+            /* Mark the end of a packet */
+            /****************************/
+            done_reading <= 'b0;
 
-        wr_ctrl_rdy <= 'b0;
-        done_reading <= 'b0;
-
-        if (burst_start) begin
-            tx_accept_counter <= burst_size;
-        end
-        else if (tx_accept && tx_accept_counter > '0) begin
-            if (tx_accept_counter < 'h4) begin
-                tx_accept_counter <= (total_burst_remaining + word_alignment_remainder);
+            // if (total_burst_remaining === 0 && tx_accept_counter === 0 && burst_end && !done_reading && state == WR_PKT_DATA) begin // just trigger it for one cycle
+            if (total_burst_remaining === 0 && tx_accept_counter === 0 && burst_end) begin // just trigger it for one cycle
+                done_reading <= 'b1;
             end
-            else begin
-                tx_accept_counter <= tx_accept_counter -'h4;
-            end
-        end
 
-        if (total_burst_remaining === 0 && tx_accept_counter === 0 && burst_end && !done_reading && state == WR_PKT_DATA) begin // just trigger it for one cycle
-            wr_ctrl_rdy <= 'b1;
-            done_reading <= 'b1;
+            /******************************************************************************/
+            /* We need to retain last FIFO output in case there is a stall at skbf1 input */
+            /******************************************************************************/
+            fifo_out_d <= fifo_out;
         end
     end
 
