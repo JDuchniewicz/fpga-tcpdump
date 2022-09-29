@@ -65,7 +65,7 @@ module wr_ctrl(input logic clk,
     // Avalon MM interface signals
     assign write = skbf2_valid && tx_allowed && !burst_end;
     assign address = skbf2_out_data[79:48];
-    assign burstcount = skbf2_out_data[47:32];
+    assign burstcount = (skbf2_out_data[47:32] < 'b1) ? 'b1 : ((skbf2_out_data[47:32] + 'd4 - 'd1) / 'd4);
     assign writedata = skbf2_out_data[31:0];
 
     skidbuffer #(
