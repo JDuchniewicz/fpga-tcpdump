@@ -113,7 +113,7 @@ module rd_ctrl(input logic clk,
 
     always_ff @(posedge clk) begin : burst_ctrl
         if (start_transfer) begin
-            total_burst_remaining <= (total_size < 'd16) ? '0 : (total_size - 'd16); // TODO: temp variable name, change
+            total_burst_remaining <= total_size; // TODO: temp variable name, change
         end
         else if (burst_end) begin
             total_burst_remaining <= ((total_burst_remaining < 'd16) ? '0 : (total_burst_remaining - 'd16));
@@ -153,7 +153,7 @@ module rd_ctrl(input logic clk,
         rd_ctrl_rdy <= 1'b0;
         done_sending <= 1'b0;
 
-        if (!start_transfer && total_burst_remaining === 0  && burst_segment_remaining_count === 0 && burst_end && !done_sending && state == RUN) begin // just trigger it for one cycle
+        if (!start_transfer && total_burst_remaining <= 'd16  && burst_segment_remaining_count === 0 && burst_end && !done_sending && state == RUN) begin // just trigger it for one cycle
             rd_ctrl_rdy <= 1'b1;
             done_sending <= 1'b1;
         end

@@ -295,7 +295,7 @@ module wr_ctrl(input logic clk,
             done_reading <= 'b0;
 
             // if (total_burst_remaining === 0 && tx_accept_counter === 0 && burst_end && !done_reading && state == WR_PKT_DATA) begin // just trigger it for one cycle
-            if (total_burst_remaining === 0 && tx_accept_counter === 0 && burst_end) begin // just trigger it for one cycle
+            if (total_burst_remaining <= 'd16 && tx_accept_counter === 0 && burst_end) begin // just trigger it for one cycle
                 done_reading <= 'b1;
             end
 
