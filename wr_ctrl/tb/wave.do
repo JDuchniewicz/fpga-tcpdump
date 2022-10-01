@@ -25,7 +25,6 @@ add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/control
 add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/pkt_begin
 add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/pkt_end
 add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/fifo_out
-add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/write_address
 add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/writedata
 add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/write
 add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/waitrequest
@@ -34,7 +33,6 @@ add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/rd_from_fif
 add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/done_reading
 add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/burst_start
 add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/burst_end
-add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/first_burst
 add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/first_burst_wait_fifo_fill
 add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/timestamp_pkt_reg
 add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/timestamp_pkt_cnt
@@ -42,9 +40,20 @@ add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/state
 add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/state_next
 add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/tx_accept
 add wave -noupdate -expand -group dut -radix unsigned /tb_top/dut/tx_accept_counter
-add wave -noupdate -expand -group dut /tb_top/dut/tx_allowed
 add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/wr_ctrl_rdy
-add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/rd_from_fifo_d
+add wave -noupdate -expand -group ringbuffer -radix hexadecimal /tb_top/dut/capt_buf_start
+add wave -noupdate -expand -group ringbuffer -radix hexadecimal /tb_top/dut/capt_buf_size
+add wave -noupdate -expand -group ringbuffer -radix hexadecimal /tb_top/dut/last_write_addr_in
+add wave -noupdate -expand -group ringbuffer -radix hexadecimal /tb_top/dut/last_write_addr_out
+add wave -noupdate -expand -group ringbuffer -radix hexadecimal /tb_top/dut/capt_buf_wrap
+add wave -noupdate -expand -group ringbuffer -radix hexadecimal /tb_top/dut/burstsize_in_words
+add wave -noupdate -expand -group ringbuffer -radix hexadecimal /tb_top/dut/words_to_write
+add wave -noupdate -expand -group ringbuffer -radix hexadecimal /tb_top/dut/words_rem_timestamp
+add wave -noupdate -expand -group ringbuffer -radix hexadecimal /tb_top/dut/words_rem_wr_pkt
+add wave -noupdate -expand -group ringbuffer -radix hexadecimal /tb_top/dut/address_diff_bytes
+add wave -noupdate -expand -group ringbuffer -radix hexadecimal /tb_top/dut/last_burst_rem
+add wave -noupdate -expand -group ringbuffer -radix hexadecimal /tb_top/dut/capt_buf_last_addr
+add wave -noupdate -expand -group ringbuffer -radix hexadecimal /tb_top/dut/last_write_addr
 add wave -noupdate -expand -group int -radix hexadecimal /tb_top/dut/int_address
 add wave -noupdate -expand -group int -radix hexadecimal /tb_top/dut/int_writedata
 add wave -noupdate -expand -group int -radix hexadecimal /tb_top/dut/int_burstcount
@@ -100,4 +109,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {6897 ns} {7352 ns}
+WaveRestoreZoom {4932 ns} {5849 ns}

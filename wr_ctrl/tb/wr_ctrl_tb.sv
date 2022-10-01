@@ -5,8 +5,10 @@ module tb_top;
 
     always #10 clk = ~clk;
 
-    logic wr_ctrl, empty, wr_ctrl_rdy, waitrequest, rd_from_fifo, almost_full, wrreq;
-    logic [31:0] control, pkt_begin, pkt_end, write_address, fifo_out, fifo_in;
+    logic wr_ctrl, empty, wr_ctrl_rdy, waitrequest, rd_from_fifo,
+          almost_full, wrreq, capt_buf_wrap;
+    logic [31:0] control, pkt_begin, pkt_end, capt_buf_start, capt_buf_size,
+                 last_write_addr_in, last_write_addr_out, fifo_out, fifo_in;
 
     logic [8:0] usedw;
     logic [31:0] seconds, nanoseconds;
@@ -27,10 +29,14 @@ module tb_top;
                 .control,
                 .pkt_begin,
                 .pkt_end,
-                .write_address,
+                .capt_buf_start,
+                .capt_buf_size,
+                .last_write_addr_in,
                 .fifo_out,
                 .rd_from_fifo,
                 .wr_ctrl_rdy,
+                .last_write_addr_out,
+                .capt_buf_wrap,
                 .usedw,
                 .seconds,
                 .nanoseconds,
@@ -63,7 +69,9 @@ module tb_top;
         control <= '0;
         pkt_begin <= '0;
         pkt_end <= 'h100;
-        write_address <= 'h8000;
+        capt_buf_start <= 'h8000;
+        capt_buf_size <= 'h20;
+        last_write_addr_in <= 'h8000;
 
         data_out <= '0;
 

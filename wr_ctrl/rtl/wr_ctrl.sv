@@ -8,10 +8,14 @@ module wr_ctrl(input logic clk,
                input logic [31:0] control,
                input logic [31:0] pkt_begin,
                input logic [31:0] pkt_end,
-               input logic [31:0] write_address,
+               input logic [31:0] capt_buf_start,
+               input logic [31:0] capt_buf_size,
+               input logic [31:0] last_write_addr_in, // TODO: rethink if we need it like that
                input logic [8:0] usedw,
                input logic [31:0] seconds,
                input logic [31:0] nanoseconds,
+               output logic [31:0] last_write_addr_out, // TODO: make it readonly from the user perspective in the main module
+               output logic capt_buf_wrap,
                // avalon (host)master signals
                output logic [31:0] address,
                output logic [31:0] writedata,
@@ -22,12 +26,18 @@ module wr_ctrl(input logic clk,
 
     enum logic [2:0] { IDLE, PREP, WR_TIMESTAMP, WR_PKT_DATA, DONE } state, state_next;
 
-    logic [31:0] reg_control, reg_pkt_begin, reg_pkt_end, reg_write_address;
+    logic [31:0] reg_control, reg_pkt_begin, reg_pkt_end,
+                 reg_capt_buf_start, reg_capt_buf_size, reg_last_write_addr;
     logic done_reading, start_transfer;
 
     logic [15:0] total_burst_remaining,
                  burst_segment_remaining_count,
-                 total_size;
+                 total_size, burstsize_in_words,
+                 words_to_write, words_rem_timestamp,
+                 words_rem_wr_pkt, address_diff_bytes,
+                 last_burst_rem;
+
+    logic [31:0] capt_buf_last_addr, last_write_addr;
 
     logic [15:0] burst_size;
     logic burst_start, burst_end, first_burst_wait_fifo_fill, timestamp_accept;
@@ -36,7 +46,7 @@ module wr_ctrl(input logic clk,
 
     logic [31:0] int_address, int_writedata, fifo_out_d;
     logic [15:0] int_burstcount;
-    logic int_write, int_write_d;
+    logic int_write;
     logic [79:0] skbf1_in_data, skbf2_in_data, skbf2_out_data;
     logic skbf1_data_valid;
 
@@ -45,6 +55,18 @@ module wr_ctrl(input logic clk,
 
     logic [15:0] tx_accept_counter;
 
+    // constant assignments for bytes to words conversion required by
+    // interconnect
+    assign capt_buf_last_addr = reg_capt_buf_start + reg_capt_buf_size - 'b1;
+    assign address_diff_bytes = capt_buf_last_addr - last_write_addr;
+    assign words_to_write = address_diff_bytes[15:2] + (address_diff_bytes[1:0] !== 'h0);
+    assign words_rem_timestamp = 'h4 - (words_to_write);
+    assign words_rem_wr_pkt = burstsize_in_words - words_to_write;
+
+    assign capt_buf_wrap = last_burst_rem !== '0;
+    assign last_write_addr_out = last_write_addr;
+
+    assign burstsize_in_words = burst_size[15:2] + (burst_size[1:0] !== 'h0); // $ceil(burst_size/4.0)
     assign word_alignment_remainder = 4 - (total_burst_remaining % 4);
 
     assign total_size = (reg_pkt_end - reg_pkt_begin);
@@ -155,20 +177,47 @@ module wr_ctrl(input logic clk,
             int_address <= '0;
             int_burstcount <= '0;
             int_write <= '0;
+            last_burst_rem <= '0;
+            last_write_addr <= '0;
         end
         else begin
             if (start_transfer) begin
-                int_address <= reg_write_address;
+                int_address <= reg_capt_buf_start;
+                last_write_addr <= reg_capt_buf_start;
             end
             else if (burst_end) begin
-                int_address <= address + burst_size;
+                if (last_burst_rem > '0) begin
+                    int_address <= reg_capt_buf_start;
+                    last_write_addr <= reg_capt_buf_start;
+                end
+                else begin
+                    int_address <= address + burst_size;
+                    last_write_addr <= address + burst_size; // TODO: is this redundant?
+                end
+                last_burst_rem <= '0;
             end
 
             if (start_transfer) begin
-                int_burstcount <= 'h4; // timestamp
+                if (last_write_addr <= capt_buf_last_addr) begin // burstcount is in words, addressing in bytes
+                    int_burstcount <= 'h4; // timestamp
+                    last_burst_rem <= '0;
+                end
+                else begin
+                    int_burstcount <= words_to_write;
+                    last_burst_rem <= words_rem_timestamp;
+                end
             end
             else if (burst_start) begin
-                int_burstcount <= burst_size[15:2] + (burst_size[1:0] !== 'h0); // $ceil(burst_size/4.0)
+                if (last_burst_rem > '0) begin // we had an overflow last burst // we need to finish the transaction
+                    int_burstcount <= last_burst_rem;
+                end
+                else if (last_write_addr <= capt_buf_last_addr) begin
+                    int_burstcount <= burstsize_in_words;
+                end
+                else begin
+                    int_burstcount <= words_to_write;
+                    last_burst_rem <= words_rem_wr_pkt; // will it decrement properly in total_burst_remaining??
+                end
             end
 
             if (state == WR_PKT_DATA) begin
@@ -189,7 +238,9 @@ module wr_ctrl(input logic clk,
             reg_control <= '0;
             reg_pkt_begin <= '0;
             reg_pkt_end <= '0;
-            reg_write_address <= '0;
+            reg_capt_buf_start <= '0;
+            reg_capt_buf_size <= '0;
+            reg_last_write_addr <= '0;
         end
 
         start_transfer <= 'b0;
@@ -199,7 +250,9 @@ module wr_ctrl(input logic clk,
             reg_control <= control;
             reg_pkt_begin <= pkt_begin;
             reg_pkt_end <= pkt_end;
-            reg_write_address <= write_address;
+            reg_capt_buf_start <= capt_buf_start;
+            reg_capt_buf_size <= capt_buf_size;
+            reg_last_write_addr <= last_write_addr;
         end
     end
 
@@ -216,8 +269,7 @@ module wr_ctrl(input logic clk,
             /* Set the total burst length at the start of a packet */
             /*******************************************************/
             if (start_transfer) begin
-                // total_burst_remaining <= (total_size < 'd16) ? 'd16 : (total_size - 'd16 + 'd16); // add fixed size of timestamping info
-                total_burst_remaining <= total_size + 'd16; // the line above sounds weird, should be like this; if you have an issue with an extra burst, than it's not a fine resolution
+                total_burst_remaining <= total_size + 'd16;
                 first_burst_wait_fifo_fill <= 'b1;
                 timestamp_pkt_cnt <= 'd4; // seconds, nanoseconds, pkt_len x2
             end

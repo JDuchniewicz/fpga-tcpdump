@@ -22,9 +22,9 @@ module register_bank
                 output logic [N-1:0] out_control,
                 output logic [N-1:0] out_pkt_begin,
                 output logic [N-1:0] out_pkt_end,
-                output logic [N-1:0] out_write_address);
+                output logic [N-1:0] out_write_address); // TODO: finish
 
-    logic [N-1:0] control, pkt_begin, pkt_end, write_address;
+    logic [N-1:0] control, pkt_begin, pkt_end, capture_buf_start, capture_buf_size;
 
     assign out_control = control;
     assign out_pkt_begin = pkt_begin;
