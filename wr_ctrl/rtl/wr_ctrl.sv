@@ -57,7 +57,7 @@ module wr_ctrl(input logic clk,
 
     // constant assignments for bytes to words conversion required by
     // interconnect
-    assign capt_buf_last_addr = reg_capt_buf_start + reg_capt_buf_size - 'b1;
+    assign capt_buf_last_addr = reg_capt_buf_start + reg_capt_buf_size;
     assign address_diff_bytes = capt_buf_last_addr - last_write_addr;
     assign words_to_write = address_diff_bytes[15:2] + (address_diff_bytes[1:0] !== 'h0);
     assign words_rem_timestamp = 'h4 - (words_to_write);
@@ -186,7 +186,7 @@ module wr_ctrl(input logic clk,
                 last_write_addr <= reg_capt_buf_start;
             end
             else if (burst_end) begin
-                if (last_burst_rem > '0) begin
+                if (int_address + burst_size >= capt_buf_last_addr) begin
                     int_address <= reg_capt_buf_start;
                     last_write_addr <= reg_capt_buf_start;
                 end
@@ -197,8 +197,8 @@ module wr_ctrl(input logic clk,
                 last_burst_rem <= '0;
             end
 
-            if (start_transfer) begin
-                if (last_write_addr <= capt_buf_last_addr) begin // burstcount is in words, addressing in bytes
+            if (start_transfer) begin // last_write_addr is wrong here
+                if (last_write_addr < capt_buf_last_addr) begin // burstcount is in words, addressing in bytes
                     int_burstcount <= 'h4; // timestamp
                     last_burst_rem <= '0;
                 end
@@ -210,8 +210,9 @@ module wr_ctrl(input logic clk,
             else if (burst_start) begin
                 if (last_burst_rem > '0) begin // we had an overflow last burst // we need to finish the transaction
                     int_burstcount <= last_burst_rem;
+                    last_burst_rem <= '0;
                 end
-                else if (last_write_addr <= capt_buf_last_addr) begin
+                else if (last_write_addr < capt_buf_last_addr) begin
                     int_burstcount <= burstsize_in_words;
                 end
                 else begin
