@@ -10,11 +10,10 @@ module wr_ctrl(input logic clk,
                input logic [31:0] pkt_end,
                input logic [31:0] capt_buf_start,
                input logic [31:0] capt_buf_size,
-               input logic [31:0] last_write_addr_in, // TODO: rethink if we need it like that
                input logic [8:0] usedw,
                input logic [31:0] seconds,
                input logic [31:0] nanoseconds,
-               output logic [31:0] last_write_addr_out, // TODO: make it readonly from the user perspective in the main module
+               output logic [31:0] last_write_addr,
                output logic capt_buf_wrap,
                // avalon (host)master signals
                output logic [31:0] address,
@@ -36,7 +35,7 @@ module wr_ctrl(input logic clk,
                  default_burst_size, bytes_in_burst,
                  burstsize_in_words, word_size;
 
-    logic [31:0] capt_buf_end, last_write_addr;
+    logic [31:0] capt_buf_end;
 
     logic [15:0] burst_size;
     logic burst_start, burst_end, first_burst_wait_fifo_fill, timestamp_accept;
@@ -62,8 +61,6 @@ module wr_ctrl(input logic clk,
     // interconnect
     assign capt_buf_end = reg_capt_buf_start + reg_capt_buf_size;
     assign bytes_to_buf_end = first_transaction ? capt_buf_end - capt_buf_start : capt_buf_end - last_write_addr;
-
-    assign last_write_addr_out = last_write_addr;
 
     assign burstsize_in_words = burst_size[15:2] + (burst_size[1:0] !== 'h0); // $ceil(burst_size/4.0)
     assign word_alignment_remainder = 4 - (total_burst_remaining % 4);
