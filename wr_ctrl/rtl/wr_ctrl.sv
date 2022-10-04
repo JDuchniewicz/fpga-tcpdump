@@ -301,10 +301,10 @@ module wr_ctrl(input logic clk,
                     //burst_size <= ((total_burst_remaining + word_alignment_remainder) < bytes_to_buf_end) ?
                     //              (total_burst_remaining + word_alignment_remainder) :
                     //              bytes_to_buf_end;
-                    burst_size <= (total_burst_remaining < bytes_to_buf_end) ? total_burst_remaining : bytes_to_buf_end;
+                    burst_size <= (total_burst_remaining - 'd16 < bytes_to_buf_end) ? total_burst_remaining - 'd16 : bytes_to_buf_end;
                 end
                 else begin
-                    burst_size <= (total_burst_remaining < 'd16) ? total_burst_remaining : 'd16;
+                    burst_size <= (total_burst_remaining - 'd16 < 'd16) ? total_burst_remaining - 'd16 : 'd16;
                 end
             end
 

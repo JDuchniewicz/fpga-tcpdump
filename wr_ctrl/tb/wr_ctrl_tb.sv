@@ -68,7 +68,7 @@ module tb_top;
 
         control <= '0;
         pkt_begin <= '0;
-        pkt_end <= 'hf0;
+        pkt_end <= 'hf4;
         capt_buf_start <= 'h8000;
         capt_buf_size <= 'h80;
         last_write_addr_in <= 'h8000;
@@ -109,6 +109,20 @@ module tb_top;
         #20
         $display("[WR_CTRL_normal] T= %t after wr_ctrl=0 received: %d, write_address: %x", $time, data_out, address);
 
+        #20
+        // second packet
+        pkt_begin <= '0;
+        pkt_end <= 'hf4;
+
+
+        #20
+        wr_ctrl <= 1'b1;
+        for(int i = 0; i < pkt_end / 4; ++i) begin
+            #20
+            $display("[WR_CTRL_normal] T= %t fifo_out: %d, received: %d, burstcount: %d, write_address: %x", $time, fifo_out, data_out, burstcount, address);
+        end
+        #20
+        $display("[WR_CTRL_normal] T= %t fifo_out: %d, received: %d, write_address: %x", $time, fifo_out, data_out, address);
         #20
         // add additional tests for bursting
         // assert queue empty
