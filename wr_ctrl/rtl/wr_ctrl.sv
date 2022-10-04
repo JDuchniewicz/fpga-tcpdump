@@ -333,7 +333,8 @@ module wr_ctrl(input logic clk,
             else if ((state == WR_TIMESTAMP && skbf1_ready) || (state == WR_PKT_DATA && rd_from_fifo)) begin
                 if (burst_segment_remaining_count > 'h0) begin
                     if (burst_segment_remaining_count < 'h4) begin
-                        burst_segment_remaining_count <= (total_burst_remaining + word_alignment_remainder);
+                        //burst_segment_remaining_count <= (total_burst_remaining + word_alignment_remainder);
+                        burst_segment_remaining_count <= '0;
                     end
                     else begin
                         burst_segment_remaining_count <= burst_segment_remaining_count -'h4;
@@ -349,7 +350,7 @@ module wr_ctrl(input logic clk,
             end
             else if (tx_accept && tx_accept_counter > '0) begin
                 if (tx_accept_counter < 'h4) begin
-                    tx_accept_counter <= (total_burst_remaining + word_alignment_remainder);
+                    tx_accept_counter <= '0;
                 end
                 else begin
                     tx_accept_counter <= tx_accept_counter -'h4;
