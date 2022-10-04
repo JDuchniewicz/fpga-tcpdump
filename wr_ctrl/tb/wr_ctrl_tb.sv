@@ -68,9 +68,9 @@ module tb_top;
 
         control <= '0;
         pkt_begin <= '0;
-        pkt_end <= 'h100;
+        pkt_end <= 'hf0;
         capt_buf_start <= 'h8000;
-        capt_buf_size <= 'h20;
+        capt_buf_size <= 'h80;
         last_write_addr_in <= 'h8000;
 
         data_out <= '0;

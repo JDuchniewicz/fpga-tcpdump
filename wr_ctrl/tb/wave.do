@@ -41,24 +41,18 @@ add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/state_next
 add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/tx_accept
 add wave -noupdate -expand -group dut -radix unsigned /tb_top/dut/tx_accept_counter
 add wave -noupdate -expand -group dut -radix hexadecimal /tb_top/dut/wr_ctrl_rdy
+add wave -noupdate -expand -group ringbuffer -radix hexadecimal /tb_top/dut/bytes_to_buf_end
 add wave -noupdate -expand -group ringbuffer -radix hexadecimal /tb_top/dut/capt_buf_start
 add wave -noupdate -expand -group ringbuffer -radix hexadecimal /tb_top/dut/capt_buf_size
 add wave -noupdate -expand -group ringbuffer -radix hexadecimal /tb_top/dut/last_write_addr_in
 add wave -noupdate -expand -group ringbuffer -radix hexadecimal /tb_top/dut/last_write_addr_out
 add wave -noupdate -expand -group ringbuffer -radix hexadecimal /tb_top/dut/capt_buf_wrap
 add wave -noupdate -expand -group ringbuffer -radix hexadecimal /tb_top/dut/burstsize_in_words
-add wave -noupdate -expand -group ringbuffer -radix hexadecimal /tb_top/dut/words_to_write
-add wave -noupdate -expand -group ringbuffer -radix hexadecimal /tb_top/dut/words_rem_timestamp
-add wave -noupdate -expand -group ringbuffer -radix hexadecimal /tb_top/dut/words_rem_wr_pkt
-add wave -noupdate -expand -group ringbuffer -radix hexadecimal /tb_top/dut/address_diff_bytes
-add wave -noupdate -expand -group ringbuffer -radix hexadecimal /tb_top/dut/last_burst_rem
-add wave -noupdate -expand -group ringbuffer -radix hexadecimal /tb_top/dut/capt_buf_last_addr
 add wave -noupdate -expand -group ringbuffer -radix hexadecimal /tb_top/dut/last_write_addr
 add wave -noupdate -expand -group int -radix hexadecimal /tb_top/dut/int_address
 add wave -noupdate -expand -group int -radix hexadecimal /tb_top/dut/int_writedata
 add wave -noupdate -expand -group int -radix hexadecimal /tb_top/dut/int_burstcount
 add wave -noupdate -expand -group int -radix hexadecimal /tb_top/dut/int_write
-add wave -noupdate -expand -group int -radix hexadecimal /tb_top/dut/int_write_d
 add wave -noupdate -expand -group skbf1 -radix hexadecimal /tb_top/dut/skbf1/i_clk
 add wave -noupdate -expand -group skbf1 -radix hexadecimal /tb_top/dut/skbf1/i_reset
 add wave -noupdate -expand -group skbf1 -radix hexadecimal /tb_top/dut/skbf1/i_valid
@@ -93,7 +87,7 @@ add wave -noupdate -expand -group ts -radix decimal /tb_top/ts/nanoseconds
 add wave -noupdate -expand -group ts -radix decimal /tb_top/ts/counter
 add wave -noupdate -expand -group ts -radix decimal /tb_top/ts/increment
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {7082 ns} 0}
+WaveRestoreCursors {{Cursor 1} {5465 ns} 0}
 quietly wave cursor active 1
 configure wave -namecolwidth 183
 configure wave -valuecolwidth 187
@@ -109,4 +103,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {4932 ns} {5849 ns}
+WaveRestoreZoom {4842 ns} {5825 ns}
