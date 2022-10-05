@@ -31,14 +31,16 @@ module wr_ctrl(input logic clk,
 
     logic [15:0] total_burst_remaining,
                  burst_segment_remaining_count,
-                 total_size, bytes_to_buf_end,
+                 total_size,
                  default_burst_size, bytes_in_burst,
                  burstsize_in_words, word_size;
+
+    logic [31:0] bytes_to_buf_end; // TODO: size?
 
     logic [31:0] capt_buf_end;
 
     logic [15:0] burst_size;
-    logic burst_start, burst_end, first_burst_wait_fifo_fill, timestamp_accept;
+    logic burst_start, burst_end, first_burst_wait_fifo_fill;
     logic skbf1_valid, skbf2_valid, tx_accept, skbf1_ready, skbf2_ready;
     logic [31:0] timestamp_pkt_reg;
 
@@ -68,7 +70,6 @@ module wr_ctrl(input logic clk,
     assign total_size = (reg_pkt_end - reg_pkt_begin);
 
     assign tx_accept = write && !waitrequest;
-    assign timestamp_accept = (timestamp_pkt_cnt > '0 && !waitrequest);
 
     assign timestamp_pkt_reg = (timestamp_pkt_cnt == 'd4) ? seconds :
                                ((timestamp_pkt_cnt == 'd3) ? nanoseconds : total_size);
@@ -290,7 +291,8 @@ module wr_ctrl(input logic clk,
                 burst_start <= 'b1;
                 burst_size <= timestamp_pkt_cnt * word_size; // TODO: parametrize
             end
-            else if (state == WR_PKT_DATA && (first_burst_wait_fifo_fill && usedw >= 'd4) || (burst_end && total_burst_remaining > 0)) begin
+            else if (state == WR_PKT_DATA && (first_burst_wait_fifo_fill && usedw >= 'd4) ||
+                    (!first_burst_wait_fifo_fill && burst_end && total_burst_remaining > 0)) begin
                 burst_start <= 'b1;
                 first_burst_wait_fifo_fill <= 'b0;
 

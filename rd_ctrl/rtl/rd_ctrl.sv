@@ -35,6 +35,8 @@ module rd_ctrl(input logic clk,
     assign total_size = (reg_pkt_end - reg_pkt_begin);
     assign word_alignment_remainder = 4 - (total_burst_remaining % 4);
 
+    assign rd_ctrl_rdy = done_sending;
+
     // counter that counts number of words left to be read (decremented until
     // 0)
     // decrement the counter by burstcount until zero
@@ -116,7 +118,7 @@ module rd_ctrl(input logic clk,
             total_burst_remaining <= total_size; // TODO: temp variable name, change
         end
         else if (burst_end) begin
-            total_burst_remaining <= ((total_burst_remaining < 'd16) ? '0 : (total_burst_remaining - 'd16));
+            total_burst_remaining <= total_burst_remaining - (total_burst_remaining < 'd16 ? total_burst_remaining : burst_size);
         end
 
         burst_start <= 'b0;
@@ -150,11 +152,9 @@ module rd_ctrl(input logic clk,
             burst_end <= 'b1;
         end
 
-        rd_ctrl_rdy <= 1'b0;
         done_sending <= 1'b0;
 
-        if (!start_transfer && total_burst_remaining <= 'd16  && burst_segment_remaining_count === 0 && burst_end && !done_sending && state == RUN) begin // just trigger it for one cycle
-            rd_ctrl_rdy <= 1'b1;
+        if (!start_transfer && total_burst_remaining == '0  && burst_segment_remaining_count === 0 && burst_end && !done_sending && state == RUN) begin // just trigger it for one cycle
             done_sending <= 1'b1;
         end
     end

@@ -54,7 +54,7 @@ module tb_top;
 
         control <= '0;
         pkt_begin <= '0;
-        pkt_end <= 'h100; // 8 words 32 bytes
+        pkt_end <= 'h75; // 8 words 32 bytes
         waitrequest <= 1'b0;
 
         reset <= 1'b0;
@@ -226,7 +226,7 @@ module tb_top;
         //if (read) begin // if burstactive TODO: change
             waitrequest <= 1'b0;
             repeat(2) @(posedge clk);
-            for (int i = 0; i < burstcount; ++i) begin
+            for (int i = 0; i < burstcount / 4; ++i) begin
                 readdata <= i + 'd10;
                 readdatavalid <= 1'b1;
                 @(posedge clk);

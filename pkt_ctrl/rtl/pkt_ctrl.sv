@@ -8,7 +8,7 @@ module pkt_ctrl(input logic new_request,
                 output logic wr_ctrl,
                 output logic [1:0] state_out,
                 output logic busy,
-                output logic done); // TODO: change
+                output logic done);
 
     enum logic [1:0] { IDLE, RUN, RD_DONE, WR_DONE } state, state_next;
 
@@ -46,7 +46,11 @@ module pkt_ctrl(input logic new_request,
 
             RUN:    begin
                     busy = 1'b1;
-                    if (rd_ctrl_rdy) begin
+                    // handle corner case where they both finish in the same cycle
+                    if (rd_ctrl_rdy && wr_ctrl_rdy) begin
+                        state_next = WR_DONE;
+                    end
+                    else if (rd_ctrl_rdy) begin
                         state_next = RD_DONE;
                     end
                     else begin
