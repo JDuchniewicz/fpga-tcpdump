@@ -291,8 +291,8 @@ module wr_ctrl(input logic clk,
                 burst_start <= 'b1;
                 burst_size <= timestamp_pkt_cnt * word_size; // TODO: parametrize
             end
-            else if (state == WR_PKT_DATA && (first_burst_wait_fifo_fill && usedw >= 'd4) ||
-                    (!first_burst_wait_fifo_fill && burst_end && total_burst_remaining > 0)) begin
+            else if ((state == WR_PKT_DATA && (first_burst_wait_fifo_fill && usedw >= 'd4)) ||
+                    (!first_burst_wait_fifo_fill && burst_end && total_burst_remaining > 'd16)) begin
                 burst_start <= 'b1;
                 first_burst_wait_fifo_fill <= 'b0;
 

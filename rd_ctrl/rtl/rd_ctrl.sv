@@ -98,7 +98,7 @@ module rd_ctrl(input logic clk,
         end
 
         if (burst_start) begin
-            burstcount <= burst_size;
+            burstcount <= burst_size[15:2] + (burst_size[1:0] !== 'h0);
         end
     end
 
@@ -128,7 +128,7 @@ module rd_ctrl(input logic clk,
             burst_size <= total_size < 'd16 ? total_size : 'd16; // TODO: at least 64 bytes
         end
 
-        if (burst_end && total_burst_remaining > '0) begin
+        if (burst_end && total_burst_remaining > 'd16) begin
             burst_start <= 'b1;
             burst_size <= total_burst_remaining < 'd16 ? (total_burst_remaining + word_alignment_remainder) : 'd16;
         end
@@ -154,7 +154,7 @@ module rd_ctrl(input logic clk,
 
         done_sending <= 1'b0;
 
-        if (!start_transfer && total_burst_remaining == '0  && burst_segment_remaining_count === 0 && burst_end && !done_sending && state == RUN) begin // just trigger it for one cycle
+        if (!start_transfer && total_burst_remaining <= 'd16  && burst_segment_remaining_count === 0 && burst_end && !done_sending && state == RUN) begin // just trigger it for one cycle
             done_sending <= 1'b1;
         end
     end
