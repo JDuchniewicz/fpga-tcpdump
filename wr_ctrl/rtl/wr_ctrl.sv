@@ -208,7 +208,8 @@ module wr_ctrl(input logic clk,
             end
 
             if (start_transfer) begin // TODO: check if proper
-                int_burstcount <= burstsize_in_words; // timestamp
+                //int_burstcount <= burstsize_in_words; // timestamp
+                int_burstcount <= 'h4; // timestamp
             end
             else if (burst_start) begin
                 int_burstcount <= burstsize_in_words;

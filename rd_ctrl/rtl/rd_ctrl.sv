@@ -130,7 +130,7 @@ module rd_ctrl(input logic clk,
 
         if (burst_end && total_burst_remaining > 'd16) begin
             burst_start <= 'b1;
-            burst_size <= total_burst_remaining < 'd16 ? (total_burst_remaining + word_alignment_remainder) : 'd16;
+            burst_size <= (total_burst_remaining - 'd16 < 'd16) ? total_burst_remaining - 'd16 : 'd16;
         end
 
         if (burst_start) begin
@@ -139,10 +139,10 @@ module rd_ctrl(input logic clk,
         else if (readdatavalid) begin
             if (burst_segment_remaining_count > 'h0) begin
                 if (burst_segment_remaining_count < 'h4) begin
-                    burst_segment_remaining_count <= (total_burst_remaining + word_alignment_remainder);
+                    burst_segment_remaining_count <= '0;
                 end
                 else begin
-                    burst_segment_remaining_count <= burst_segment_remaining_count -'h4;
+                    burst_segment_remaining_count <= burst_segment_remaining_count - 'h4;
                 end
             end
         end
