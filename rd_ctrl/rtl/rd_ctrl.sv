@@ -1,11 +1,13 @@
-module rd_ctrl(input logic clk,
+module rd_ctrl
+               #(parameter BURST_SIZE_WORDS = 4)
+               (input logic clk,
                input logic reset,
                input logic rd_ctrl,
                input logic almost_full,
                input logic [31:0] control,
                input logic [31:0] pkt_begin,
                input logic [31:0] pkt_end,
-               output logic [31:0] fifo_in, // here we also need the actual data obtained from mem addr H2F in ctrl regfrom s
+               output logic [31:0] fifo_in,
                output logic wr_to_fifo,
                output logic rd_ctrl_rdy,
                // avalon (host)master signals
@@ -17,8 +19,6 @@ module rd_ctrl(input logic clk,
                input logic waitrequest
            );
 
-           // TODO: introduce a dynamic param width equal to readdata'width/
-           // symbol'width == 4
     enum logic [1:0] { IDLE, RUN, DONE } state, state_next;
 
     logic [31:0] reg_control, reg_pkt_begin, reg_pkt_end;
@@ -26,26 +26,15 @@ module rd_ctrl(input logic clk,
 
     logic [15:0] total_burst_remaining,
                  burst_segment_remaining_count,
-                 total_size;
+                 total_size, BYTES_IN_BURST;
 
     logic [15:0] burst_size;
-    logic [1:0] word_alignment_remainder;
     logic burst_start, burst_end;
 
+    assign BYTES_IN_BURST = BURST_SIZE_WORDS * 'h4;
     assign total_size = (reg_pkt_end - reg_pkt_begin);
-    assign word_alignment_remainder = 4 - (total_burst_remaining % 4);
 
     assign rd_ctrl_rdy = done_sending;
-
-    // counter that counts number of words left to be read (decremented until
-    // 0)
-    // decrement the counter by burstcount until zero
-    // set up max burstcount 256 (or 16)
-    // burscount = max(16, nr_of_words)
-    // everything in bytes
-    // another counter that counts the number of bytes left in one burst
-    // transaction
-    // add separate clocked process
 
     always_ff @(posedge clk) begin : states
         if (!reset) begin
@@ -77,7 +66,7 @@ module rd_ctrl(input logic clk,
                     end
 
             DONE:   begin
-                        state_next = IDLE; // TODO: debug why states oscillate several times here
+                        state_next = IDLE;
                     end
         endcase
     end
@@ -118,19 +107,21 @@ module rd_ctrl(input logic clk,
             total_burst_remaining <= total_size; // TODO: temp variable name, change
         end
         else if (burst_end) begin
-            total_burst_remaining <= total_burst_remaining - (total_burst_remaining < 'd16 ? total_burst_remaining : burst_size);
+            total_burst_remaining <= total_burst_remaining - (total_burst_remaining < BYTES_IN_BURST ?
+                                     total_burst_remaining : burst_size);
         end
 
         burst_start <= 'b0;
 
         if (start_transfer) begin
             burst_start <= 'b1;
-            burst_size <= total_size < 'd16 ? total_size : 'd16; // TODO: at least 64 bytes
+            burst_size <= total_size < BYTES_IN_BURST ? total_size : BYTES_IN_BURST; // TODO: at least 64 bytes
         end
 
-        if (burst_end && total_burst_remaining > 'd16) begin
+        if (burst_end && total_burst_remaining > BYTES_IN_BURST) begin
             burst_start <= 'b1;
-            burst_size <= (total_burst_remaining - 'd16 < 'd16) ? total_burst_remaining - 'd16 : 'd16;
+            burst_size <= (total_burst_remaining - BYTES_IN_BURST < BYTES_IN_BURST) ?
+                           total_burst_remaining - BYTES_IN_BURST : BYTES_IN_BURST;
         end
 
         if (burst_start) begin
@@ -154,7 +145,7 @@ module rd_ctrl(input logic clk,
 
         done_sending <= 1'b0;
 
-        if (!start_transfer && total_burst_remaining <= 'd16  && burst_segment_remaining_count === 0 && burst_end && !done_sending && state == RUN) begin // just trigger it for one cycle
+        if (!start_transfer && total_burst_remaining <= BYTES_IN_BURST  && burst_segment_remaining_count === 0 && burst_end && !done_sending && state == RUN) begin // just trigger it for one cycle
             done_sending <= 1'b1;
         end
     end

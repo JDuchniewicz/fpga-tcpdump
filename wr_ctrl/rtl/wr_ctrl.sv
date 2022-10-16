@@ -1,4 +1,6 @@
-module wr_ctrl(input logic clk,
+module wr_ctrl
+               #(parameter BURST_SIZE_WORDS = 4)
+               (input logic clk,
                input logic reset,
                input logic wr_ctrl,
                input logic empty,
@@ -31,11 +33,10 @@ module wr_ctrl(input logic clk,
 
     logic [15:0] total_burst_remaining,
                  burst_segment_remaining_count,
-                 total_size,
-                 default_burst_size, bytes_in_burst,
-                 burstsize_in_words, word_size;
+                 total_size, BYTES_IN_BURST,
+                 burstsize_in_words, WORD_SIZE;
 
-    logic [31:0] bytes_to_buf_end; // TODO: size?
+    logic [31:0] bytes_to_buf_end;
 
     logic [31:0] capt_buf_end;
 
@@ -51,21 +52,19 @@ module wr_ctrl(input logic clk,
     logic skbf1_data_valid;
 
     logic [2:0] timestamp_pkt_cnt;
-    logic [1:0] word_alignment_remainder;
 
     logic [15:0] tx_accept_counter;
 
     // constants!
-    assign word_size = 'd4;
-    assign default_burst_size = 'd4;
-    assign bytes_in_burst = 'd16; // TODO: not redundant?
+    assign WORD_SIZE = 'd4;
+    assign BYTES_IN_BURST = BURST_SIZE_WORDS * WORD_SIZE;
+
     // constant assignments for bytes to words conversion required by
     // interconnect
     assign capt_buf_end = reg_capt_buf_start + reg_capt_buf_size;
     assign bytes_to_buf_end = first_transaction ? capt_buf_end - capt_buf_start : capt_buf_end - last_write_addr;
 
     assign burstsize_in_words = burst_size[15:2] + (burst_size[1:0] !== 'h0); // $ceil(burst_size/4.0)
-    assign word_alignment_remainder = 4 - (total_burst_remaining % 4);
 
     assign total_size = (reg_pkt_end - reg_pkt_begin);
 
@@ -180,20 +179,16 @@ module wr_ctrl(input logic clk,
         else begin
             if (start_transfer && first_transaction) begin // this is start of every packet, it will overwrite, flag for resetting last_write_addr
                 int_address <= reg_capt_buf_start;
-                //last_write_addr <= reg_capt_buf_start;
                 first_transaction <= '0;
             end
             else if (burst_end) begin
                 if (int_address + burst_size >= capt_buf_end) begin
                     int_address <= reg_capt_buf_start;
                     capt_buf_wrap <= 'b1;
-                    //last_write_addr <= reg_capt_buf_start; // set for last saved word, reset it on first available packet to reg_capt_buf_start
-                    // increment by burst_size
                 end
                 else begin
                     int_address <= int_address + burst_size;
                 end
-                //last_write_addr <= int_address + burst_size;
                 if (total_burst_remaining > burst_size) begin // TODO: ugly
                     if (int_address + 2 * burst_size >= capt_buf_end) begin
                         last_write_addr <= reg_capt_buf_start;
@@ -213,7 +208,6 @@ module wr_ctrl(input logic clk,
             end
             else if (burst_start) begin
                 int_burstcount <= burstsize_in_words;
-                //last_write_addr <= int_address + burst_size;
             end
 
             if (state == WR_PKT_DATA) begin
@@ -268,7 +262,8 @@ module wr_ctrl(input logic clk,
                 timestamp_pkt_cnt <= 'd4; // seconds, nanoseconds, pkt_len x2
             end
             else if (burst_end) begin
-                total_burst_remaining <= total_burst_remaining - (total_burst_remaining < 'd16 ? total_burst_remaining : burst_size);
+                total_burst_remaining <= total_burst_remaining - (total_burst_remaining < BYTES_IN_BURST ?
+                                         total_burst_remaining : burst_size);
             end
 
             /*****************************/
@@ -276,35 +271,27 @@ module wr_ctrl(input logic clk,
             /*****************************/
             burst_start <= 'b0;
 
-    // evaluate depending on state
-    // operate on bytes not words,
-    // burstsize not on start_transfer, on burst_start
-                // if bytes_to_buf_end < default_burst_size * bytes_in_burst
-                // burstsize <= bytes_to_buf_end;
-                // else
-                // burstsize <= default_burst_size * bytes_in_burst;
             if (start_transfer) begin
                 burst_start <= 'b1;
-                burst_size <= (bytes_to_buf_end < 'd16 ? bytes_to_buf_end : 'd16); // first burst is a timestamp
+                burst_size <= (bytes_to_buf_end < BYTES_IN_BURST ? bytes_to_buf_end : BYTES_IN_BURST); // first burst is a timestamp
             end
 
             if (state == WR_TIMESTAMP && burst_end && timestamp_pkt_cnt > '0) begin // don't mix with data
                 burst_start <= 'b1;
-                burst_size <= timestamp_pkt_cnt * word_size; // TODO: parametrize
+                burst_size <= timestamp_pkt_cnt * WORD_SIZE; // TODO: parametrize
             end
-            else if ((state == WR_PKT_DATA && (first_burst_wait_fifo_fill && usedw >= 'd4)) ||
-                    (!first_burst_wait_fifo_fill && burst_end && total_burst_remaining > 'd16)) begin
+            else if ((state == WR_PKT_DATA && (first_burst_wait_fifo_fill && usedw >= BURST_SIZE_WORDS)) ||
+                    (!first_burst_wait_fifo_fill && burst_end && total_burst_remaining > BYTES_IN_BURST)) begin
                 burst_start <= 'b1;
                 first_burst_wait_fifo_fill <= 'b0;
 
-                if (bytes_to_buf_end < 'd16) begin // TODO: replace with constants
-                    //burst_size <= ((total_burst_remaining + word_alignment_remainder) < bytes_to_buf_end) ?
-                    //              (total_burst_remaining + word_alignment_remainder) :
-                    //              bytes_to_buf_end;
-                    burst_size <= (total_burst_remaining - 'd16 < bytes_to_buf_end) ? total_burst_remaining - 'd16 : bytes_to_buf_end;
+                if (bytes_to_buf_end < BYTES_IN_BURST) begin
+                    burst_size <= (total_burst_remaining - BYTES_IN_BURST < bytes_to_buf_end) ?
+                                   total_burst_remaining - BYTES_IN_BURST : bytes_to_buf_end;
                 end
                 else begin
-                    burst_size <= (total_burst_remaining - 'd16 < 'd16) ? total_burst_remaining - 'd16 : 'd16;
+                    burst_size <= (total_burst_remaining - BYTES_IN_BURST < BYTES_IN_BURST) ?
+                                   total_burst_remaining - BYTES_IN_BURST : BYTES_IN_BURST;
                 end
             end
 
@@ -333,11 +320,10 @@ module wr_ctrl(input logic clk,
             else if ((state == WR_TIMESTAMP && skbf1_ready) || (state == WR_PKT_DATA && rd_from_fifo)) begin
                 if (burst_segment_remaining_count > 'h0) begin
                     if (burst_segment_remaining_count < 'h4) begin
-                        //burst_segment_remaining_count <= (total_burst_remaining + word_alignment_remainder);
                         burst_segment_remaining_count <= '0;
                     end
                     else begin
-                        burst_segment_remaining_count <= burst_segment_remaining_count -'h4;
+                        burst_segment_remaining_count <= burst_segment_remaining_count - 'h4;
                     end
                 end
             end
@@ -353,7 +339,7 @@ module wr_ctrl(input logic clk,
                     tx_accept_counter <= '0;
                 end
                 else begin
-                    tx_accept_counter <= tx_accept_counter -'h4;
+                    tx_accept_counter <= tx_accept_counter - 'h4;
                 end
             end
 
@@ -362,8 +348,7 @@ module wr_ctrl(input logic clk,
             /****************************/
             done_reading <= 'b0;
 
-            // if (total_burst_remaining === 0 && tx_accept_counter === 0 && burst_end && !done_reading && state == WR_PKT_DATA) begin // just trigger it for one cycle
-            if (total_burst_remaining <= 'd16 && tx_accept_counter === 0 && burst_end) begin // just trigger it for one cycle
+            if (total_burst_remaining <= BYTES_IN_BURST && tx_accept_counter === 0 && burst_end) begin // just trigger it for one cycle
                 done_reading <= 'b1;
             end
 
