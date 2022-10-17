@@ -1,6 +1,7 @@
 // the top module, responsible for capturing (nor now) the incoming packets
 // from the network interface
-module bpfcap_top(input logic clk,
+module bpfcap_top #(parameter BURST_SIZE_WORDS = 4)
+                  (input logic clk,
                   input logic reset,
                   // 1 secondary (register accessed from the OS)
                   input logic [2:0] avs_s0_address,
@@ -64,7 +65,7 @@ module bpfcap_top(input logic clk,
                              .done); // TODO: how do we want to store current state  of FSM (as bits in the register of course)
 
     // read ctrl reads packets from memory and puts them in FIFO
-    rd_ctrl #(.BURST_SIZE_WORDS(4)) read_control (.clk,
+    rd_ctrl #(.BURST_SIZE_WORDS(BURST_SIZE_WORDS)) read_control (.clk,
                                                   .reset,
                                                   .almost_full,
                                                   .rd_ctrl,
@@ -82,7 +83,7 @@ module bpfcap_top(input logic clk,
                                                   .waitrequest(avs_m0_waitrequest));
 
     // this reads from FIFO and transfers the data to be written in SDRAM/HPS
-    wr_ctrl #(.BURST_SIZE_WORDS(4)) write_control(.clk,
+    wr_ctrl #(.BURST_SIZE_WORDS(BURST_SIZE_WORDS)) write_control(.clk,
                                                   .reset,
                                                   .empty,
                                                   .wr_ctrl,
