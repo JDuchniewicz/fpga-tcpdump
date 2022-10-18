@@ -22,7 +22,7 @@ module tb_top;
 
     int j = 0;
 
-    wr_ctrl dut(.clk,
+    wr_ctrl #(.BURST_SIZE_WORDS(8)) dut(.clk,
                 .reset,
                 .wr_ctrl,
                 .empty,
@@ -67,7 +67,7 @@ module tb_top;
 
         control <= '0;
         pkt_begin <= '0;
-        pkt_end <= 'hf2;
+        pkt_end <= 'h3c;
         capt_buf_start <= 'h8000;
         capt_buf_size <= 'h80;
         last_write_addr <= 'h8000;

@@ -1,5 +1,5 @@
 module wr_ctrl
-               #(parameter BURST_SIZE_WORDS = 4)
+               #(parameter BURST_SIZE_WORDS = 4) // TODO: len burst_len
                (input logic clk,
                input logic reset,
                input logic wr_ctrl,
@@ -56,7 +56,7 @@ module wr_ctrl
     logic [15:0] tx_accept_counter;
 
     // constants!
-    assign WORD_SIZE = 'd4;
+    assign WORD_SIZE = 'd4; // LOCALPARAM TODO:
     assign BYTES_IN_BURST = BURST_SIZE_WORDS * WORD_SIZE;
 
     // constant assignments for bytes to words conversion required by
@@ -189,12 +189,20 @@ module wr_ctrl
                 else begin
                     int_address <= int_address + burst_size;
                 end
-                if (total_burst_remaining > burst_size) begin // TODO: ugly
-                    if (int_address + 2 * burst_size >= capt_buf_end) begin
+                if (state == WR_TIMESTAMP && total_burst_remaining > 'd16) begin
+                    if (int_address + 'd16 + BYTES_IN_BURST >= capt_buf_end) begin
                         last_write_addr <= reg_capt_buf_start;
                     end
                     else begin
-                        last_write_addr <= int_address + 2 * burst_size;
+                        last_write_addr <= int_address + 'd16;
+                    end
+                end
+                else if (state == WR_PKT_DATA && total_burst_remaining > BYTES_IN_BURST) begin
+                    if (int_address + 2 * BYTES_IN_BURST >= capt_buf_end) begin
+                        last_write_addr <= reg_capt_buf_start;
+                    end
+                    else begin
+                        last_write_addr <= int_address + 2 * BYTES_IN_BURST;
                     end
                 end
                 else begin
@@ -273,15 +281,27 @@ module wr_ctrl
 
             if (start_transfer) begin
                 burst_start <= 'b1;
-                burst_size <= (bytes_to_buf_end < BYTES_IN_BURST ? bytes_to_buf_end : BYTES_IN_BURST); // first burst is a timestamp
+                burst_size <= (bytes_to_buf_end < 'd16 ? bytes_to_buf_end : 'd16); // first burst is a timestamp
             end
 
             if (state == WR_TIMESTAMP && burst_end && timestamp_pkt_cnt > '0) begin // don't mix with data
                 burst_start <= 'b1;
                 burst_size <= timestamp_pkt_cnt * WORD_SIZE; // TODO: parametrize
+            end // corner case - packets less than 64 B
+            else if (state == WR_PKT_DATA && (first_burst_wait_fifo_fill && usedw >= BURST_SIZE_WORDS)) begin
+                burst_start <= 'b1;
+                first_burst_wait_fifo_fill <= 'b0;
+
+                if (bytes_to_buf_end < BYTES_IN_BURST) begin
+                    burst_size <= (total_burst_remaining - BYTES_IN_BURST < bytes_to_buf_end) ?
+                                   total_burst_remaining - BYTES_IN_BURST : bytes_to_buf_end;
+                end
+                else begin
+                    burst_size <= (total_burst_remaining < BYTES_IN_BURST) ?
+                                   total_burst_remaining : BYTES_IN_BURST;
+                end
             end
-            else if ((state == WR_PKT_DATA && (first_burst_wait_fifo_fill && usedw >= BURST_SIZE_WORDS)) ||
-                    (!first_burst_wait_fifo_fill && burst_end && total_burst_remaining > BYTES_IN_BURST)) begin
+            else if (!first_burst_wait_fifo_fill && burst_end && total_burst_remaining > BYTES_IN_BURST) begin
                 burst_start <= 'b1;
                 first_burst_wait_fifo_fill <= 'b0;
 
