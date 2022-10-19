@@ -8,15 +8,18 @@ module pkt_ctrl(input logic new_request,
                 output logic wr_ctrl,
                 output logic [1:0] state_out,
                 output logic busy,
-                output logic done);
+                output logic done,
+                output logic [31:0] processing_cc);
 
     enum logic [1:0] { IDLE, RUN, RD_DONE, WR_DONE } state, state_next;
 
     assign state_out = state_next;
+    logic [31:0] cc_ctr;
 
     always_ff @(posedge clk) begin : states
         if (!reset) begin
             state <= IDLE;
+            cc_ctr <= '0;
         end
         else begin
             state <= state_next;
@@ -26,6 +29,14 @@ module pkt_ctrl(input logic new_request,
             if (state == IDLE && state_next == RUN) begin
                 rd_ctrl <= 1'b1;
                 wr_ctrl <= 1'b1;
+            end
+
+            if (state == RUN || state == RD_DONE) begin
+                cc_ctr <= cc_ctr + 'b1;
+            end
+            else if (state == WR_DONE) begin
+                processing_cc <= cc_ctr;
+                cc_ctr <= '0;
             end
         end
     end

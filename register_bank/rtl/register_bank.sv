@@ -25,17 +25,19 @@ module register_bank
                 output logic [N-1:0] out_pkt_end,
                 output logic [N-1:0] out_capt_buf_start,
                 output logic [N-1:0] out_capt_buf_size,
+                input logic [N-1:0] processing_cc,
                 input logic [N-1:0] last_write_addr);
 
     logic [N-1:0] control, pkt_begin, pkt_end,
                   capt_buf_start, capt_buf_size,
-                  reg_last_write_addr;
+                  reg_processing_cc, reg_last_write_addr;
 
     assign out_control = control;
     assign out_pkt_begin = pkt_begin;
     assign out_pkt_end = pkt_end;
     assign out_capt_buf_start = capt_buf_start;
     assign out_capt_buf_size = capt_buf_size;
+    assign reg_processing_cc = processing_cc;
     assign reg_last_write_addr = last_write_addr;
 
     always_ff @(posedge clk) begin
@@ -63,6 +65,7 @@ module register_bank
                     3'b011 : capt_buf_start <= writedata;
                     3'b100 : capt_buf_size <= writedata;
                     // 3'b101 : READONLY reg_last_write_addr
+                    // 3'b110 : READONLY processing_cc
                 endcase
             end
 
@@ -74,6 +77,7 @@ module register_bank
                     3'b011 : readdata <= capt_buf_start;
                     3'b100 : readdata <= capt_buf_size;
                     3'b101 : readdata <= reg_last_write_addr;
+                    3'b110 : readdata <= reg_processing_cc;
                 endcase
             end
         end

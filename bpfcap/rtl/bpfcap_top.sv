@@ -28,7 +28,7 @@ module bpfcap_top #(parameter BURST_SIZE_WORDS = 4)
     logic [1:0] state;
     logic busy, done, capt_buf_wrap;
     logic [31:0] out_control, out_pkt_begin, out_pkt_end, out_capt_buf_start,
-                 out_capt_buf_size, last_write_addr,
+                 out_capt_buf_size, processing_cc, last_write_addr,
                  seconds, nanoseconds;
 
     logic [8:0] usedw;
@@ -51,6 +51,7 @@ module bpfcap_top #(parameter BURST_SIZE_WORDS = 4)
                                  .out_pkt_end,
                                  .out_capt_buf_start,
                                  .out_capt_buf_size,
+                                 .processing_cc,
                                  .last_write_addr);
 
     pkt_ctrl packet_control (.new_request,
@@ -62,7 +63,8 @@ module bpfcap_top #(parameter BURST_SIZE_WORDS = 4)
                              .wr_ctrl,
                              .state_out(state),
                              .busy,
-                             .done); // TODO: how do we want to store current state  of FSM (as bits in the register of course)
+                             .done,
+                             .processing_cc); // TODO: how do we want to store current state  of FSM (as bits in the register of course)
 
     // read ctrl reads packets from memory and puts them in FIFO
     rd_ctrl #(.BURST_SIZE_WORDS(BURST_SIZE_WORDS)) read_control (.clk,
