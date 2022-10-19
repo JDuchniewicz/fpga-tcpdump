@@ -22,7 +22,7 @@ module tb_top;
 
     int j = 0;
 
-    wr_ctrl #(.BURST_SIZE_WORDS(8)) dut(.clk,
+    wr_ctrl #(.BURST_SIZE_WORDS(16)) dut(.clk,
                 .reset,
                 .wr_ctrl,
                 .empty,

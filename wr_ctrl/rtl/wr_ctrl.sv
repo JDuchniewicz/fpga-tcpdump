@@ -288,7 +288,7 @@ module wr_ctrl
                 burst_start <= 'b1;
                 burst_size <= timestamp_pkt_cnt * WORD_SIZE; // TODO: parametrize
             end // corner case - packets less than 64 B
-            else if (state == WR_PKT_DATA && (first_burst_wait_fifo_fill && usedw >= BURST_SIZE_WORDS)) begin
+            else if (state == WR_PKT_DATA && (first_burst_wait_fifo_fill && usedw >= BURST_SIZE_WORDS /*- 3 fix for very small packets - appears only in 16W burst sizes*/)) begin
                 burst_start <= 'b1;
                 first_burst_wait_fifo_fill <= 'b0;
 

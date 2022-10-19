@@ -18,7 +18,7 @@ module timestamp
             ctr_nanoseconds <= '0;
             ctr_seconds <= '0;
         end else begin
-            if (ctr_nanoseconds === 'd1_000 - 'd20) begin//_000_000) begin
+            if (ctr_nanoseconds === 'd1_000_000_000 - 'd20) begin
                 ctr_seconds <= ctr_seconds + 'b1;
                 ctr_nanoseconds <= '0;
             end
